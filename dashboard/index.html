@@ -284,24 +284,22 @@ function fmtDate(ts) {
   return new Date(String(ts).replace(' ','T')).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 
-/* ── Snapshot laden ── */
-let yearChart = null;
+/* ── Chart-Referenzen ── */
+let chart7d = null, yearChart = null;
+const MONTH_LBL = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const TODAY_ISO = new Date().toISOString().slice(0,10);
 
+/* ── Snapshot: nur Meta + aktuelle Werte für Heimort ── */
 async function loadData() {
   let data;
-  try {
-    data = await fetch(SNAP + '?_=' + Date.now()).then(r => r.json());
-  } catch {
-    document.getElementById('last-updated').textContent = 'Fehler beim Laden';
-    return;
-  }
+  try { data = await fetch(SNAP + '?_=' + Date.now()).then(r => r.json()); }
+  catch { document.getElementById('last-updated').textContent = 'Snapshot nicht verfügbar'; return; }
 
   const genAt = data.meta?.generated_at ?? '';
-  document.getElementById('last-updated').textContent = 'Stand: ' + genAt;
-  document.getElementById('footer-updated').textContent = 'Aktualisiert: ' + genAt;
+  document.getElementById('footer-updated').textContent = 'Snapshot: ' + genAt;
 
   const c = data.current;
-  if (c) {
+  if (c && activeName === HOME_NAME) {
     document.getElementById('cur-temp').textContent     = fmt(c.temperature);
     document.getElementById('cur-feels').textContent    = fmt(c.apparent_temperature);
     document.getElementById('cur-humidity').textContent = c.humidity ?? '–';
@@ -314,77 +312,148 @@ async function loadData() {
     el.textContent = fmt(c.uv_index, 1); el.className = 'stat-value text-2xl font-bold ' + ui.cls;
     const ll = document.getElementById('cur-uv-label');
     ll.textContent = ui.text; ll.className = 'text-xs ' + ui.cls;
+    document.getElementById('last-updated').textContent = 'Stand: ' + genAt;
   }
+}
 
-  const rec = data.records ?? {};
-  if (rec.hottest)    { document.getElementById('rec-hot').textContent     = fmt(rec.hottest.temperature)+' °C';    document.getElementById('rec-hot-date').textContent     = fmtDate(rec.hottest.timestamp); document.getElementById('rec-hot-mini').textContent = fmt(rec.hottest.temperature)+' °C'; }
-  if (rec.coldest)    { document.getElementById('rec-cold').textContent    = fmt(rec.coldest.temperature)+' °C';    document.getElementById('rec-cold-date').textContent    = fmtDate(rec.coldest.timestamp); document.getElementById('rec-cold-mini').textContent = fmt(rec.coldest.temperature)+' °C'; }
-  if (rec.wettest_day){ document.getElementById('rec-rain').textContent    = fmt(rec.wettest_day.total)+' mm';      document.getElementById('rec-rain-date').textContent    = fmtDate(rec.wettest_day.day+' 00:00:00'); document.getElementById('rec-rain-mini').textContent = fmt(rec.wettest_day.total)+' mm'; }
-  if (rec.stormiest)  { document.getElementById('rec-gust').textContent    = fmt(rec.stormiest.wind_gust,0)+' km/h'; document.getElementById('rec-gust-date').textContent  = fmtDate(rec.stormiest.timestamp); document.getElementById('rec-gust-mini').textContent = fmt(rec.stormiest.wind_gust,0)+' km/h'; }
-
-  /* 7-Tage-Chart */
-  const days7 = data.last_7_days ?? [];
-  if (days7.length) {
-    const labels = days7.map(r => {
-      const d = new Date(r.timestamp.replace(' ','T'));
-      return d.toLocaleDateString('de-DE',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    });
-    new Chart(document.getElementById('chart-7d').getContext('2d'), {
-      data: {
-        labels: labels.map((l,i) => i%6===0 ? l : ''),
-        datasets: [
-          { type:'line', label:'Temp (°C)', data:days7.map(r=>r.temperature),
-            borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)',
-            tension:0.3, pointRadius:0, yAxisID:'yT' },
-          { type:'bar', label:'Regen (mm)', data:days7.map(r=>r.precipitation),
-            backgroundColor:'rgba(59,130,246,0.55)', yAxisID:'yP' },
-        ],
+/* ── Chart-Rendering ── */
+function render7DayChart(labels, temps, precip) {
+  if (chart7d) chart7d.destroy();
+  chart7d = new Chart(document.getElementById('chart-7d').getContext('2d'), {
+    data: {
+      labels: labels.map((l,i) => i%6===0 ? l : ''),
+      datasets: [
+        { type:'line', label:'Temp (°C)', data:temps,
+          borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)',
+          tension:0.3, pointRadius:0, yAxisID:'yT' },
+        { type:'bar', label:'Regen (mm)', data:precip,
+          backgroundColor:'rgba(59,130,246,0.55)', yAxisID:'yP' },
+      ],
+    },
+    options: {
+      responsive:true, interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#64748b',maxRotation:0,font:{size:10}},grid:{color:'#1e293b'}},
+        yT:{position:'left', ticks:{color:'#f97316',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'°C',color:'#f97316'}},
+        yP:{position:'right',ticks:{color:'#3b82f6',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
       },
-      options: {
-        responsive:true, interaction:{mode:'index',intersect:false},
-        plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
-        scales:{
-          x:{ticks:{color:'#64748b',maxRotation:0,font:{size:10}},grid:{color:'#1e293b'}},
-          yT:{position:'left',ticks:{color:'#f97316',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'°C',color:'#f97316'}},
-          yP:{position:'right',ticks:{color:'#3b82f6',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
-        },
+    },
+  });
+}
+
+function renderYearChart(labels, avgTemps, totalPrecip) {
+  if (yearChart) yearChart.destroy();
+  yearChart = new Chart(document.getElementById('chart-year').getContext('2d'), {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar',  label:'Regen (mm)', data:totalPrecip, backgroundColor:'rgba(59,130,246,0.5)', yAxisID:'yP' },
+        { type:'line', label:'Ø Temp (°C)', data:avgTemps, borderColor:'#f97316',
+          backgroundColor:'transparent', tension:0.3, pointRadius:4, yAxisID:'yT' },
+      ],
+    },
+    options: {
+      responsive:true, interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'}},
+        yP:{position:'left', ticks:{color:'#3b82f6',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
+        yT:{position:'right',ticks:{color:'#f97316',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'°C',color:'#f97316'}},
       },
+    },
+  });
+}
+
+/* ── Live-Daten: 7 Tage ── */
+async function fetch7Days(lat, lon) {
+  try {
+    const d = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&hourly=temperature_2m,precipitation&past_days=7&forecast_days=0&timezone=auto`
+    ).then(r => r.json());
+    const times  = d.hourly?.time ?? [];
+    const temps  = d.hourly?.temperature_2m ?? [];
+    const precip = d.hourly?.precipitation ?? [];
+    const labels = times.map(t => new Date(t).toLocaleDateString('de-DE',
+      {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}));
+    render7DayChart(labels, temps, precip);
+  } catch(e) { console.error('7d:', e); }
+}
+
+/* ── Live-Daten: Jahresübersicht ── */
+async function fetchYearData(lat, lon, year) {
+  try {
+    const end = `${year}-12-31` > TODAY_ISO ? TODAY_ISO : `${year}-12-31`;
+    const d = await fetch(
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+      `&start_date=${year}-01-01&end_date=${end}` +
+      `&daily=temperature_2m_mean,precipitation_sum&timezone=auto`
+    ).then(r => r.json());
+    const times   = d.daily?.time ?? [];
+    const temps   = d.daily?.temperature_2m_mean ?? [];
+    const precips = d.daily?.precipitation_sum ?? [];
+
+    const byMonth = {};
+    times.forEach((t,i) => {
+      const m = t.slice(0,7);
+      if (!byMonth[m]) byMonth[m] = { t:[], p:[] };
+      if (temps[i]   != null) byMonth[m].t.push(temps[i]);
+      if (precips[i] != null) byMonth[m].p.push(precips[i]);
     });
-  }
+    const months = Object.keys(byMonth).sort();
+    const avgT  = months.map(m => { const v=byMonth[m].t; return v.length ? Math.round(v.reduce((a,b)=>a+b)/v.length*10)/10 : null; });
+    const sumP  = months.map(m => { const v=byMonth[m].p; return v.length ? Math.round(v.reduce((a,b)=>a+b)*10)/10 : null; });
+    const lbls  = months.map(m => MONTH_LBL[parseInt(m.slice(5))-1]);
+    renderYearChart(lbls, avgT, sumP);
+  } catch(e) { console.error('year:', e); }
+}
 
-  /* Jahres-Chart */
-  const monthly = data.monthly_stats ?? [];
-  if (monthly.length) {
-    const years = [...new Set(monthly.map(r=>r.month.slice(0,4)))].sort().reverse();
-    const sel = document.getElementById('year-select');
-    years.forEach(y => { const o=document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o); });
+/* ── Live-Daten: Rekorde (2019–heute) ── */
+async function fetchRecords(lat, lon) {
+  try {
+    const d = await fetch(
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+      `&start_date=2019-01-01&end_date=${TODAY_ISO}` +
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max&timezone=auto`
+    ).then(r => r.json());
+    const times = d.daily?.time ?? [];
+    const tmax  = d.daily?.temperature_2m_max ?? [];
+    const tmin  = d.daily?.temperature_2m_min ?? [];
+    const rain  = d.daily?.precipitation_sum ?? [];
+    const wind  = d.daily?.windspeed_10m_max ?? [];
 
-    function renderYear(year) {
-      const rows = monthly.filter(r=>r.month.startsWith(year));
-      const lbls = rows.map(r=>['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][parseInt(r.month.slice(5))-1]);
-      if (yearChart) yearChart.destroy();
-      yearChart = new Chart(document.getElementById('chart-year').getContext('2d'), {
-        data: {
-          labels: lbls,
-          datasets: [
-            { type:'bar',  label:'Regen (mm)', data:rows.map(r=>r.total_precip), backgroundColor:'rgba(59,130,246,0.5)', yAxisID:'yP' },
-            { type:'line', label:'Ø Temp (°C)', data:rows.map(r=>r.avg_temp), borderColor:'#f97316', backgroundColor:'transparent', tension:0.3, pointRadius:4, yAxisID:'yT' },
-          ],
-        },
-        options: {
-          responsive:true, interaction:{mode:'index',intersect:false},
-          plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
-          scales:{
-            x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'}},
-            yP:{position:'left',ticks:{color:'#3b82f6',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
-            yT:{position:'right',ticks:{color:'#f97316',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'°C',color:'#f97316'}},
-          },
-        },
-      });
-    }
-    renderYear(years[0]);
-    sel.addEventListener('change', e => renderYear(e.target.value));
+    let hi=-999,hiI=0, lo=999,loI=0, ri=-1,riI=0, wi=-1,wiI=0;
+    times.forEach((_,i) => {
+      if (tmax[i]!=null && tmax[i]>hi) { hi=tmax[i]; hiI=i; }
+      if (tmin[i]!=null && tmin[i]<lo) { lo=tmin[i]; loI=i; }
+      if (rain[i]!=null && rain[i]>ri) { ri=rain[i]; riI=i; }
+      if (wind[i]!=null && wind[i]>wi) { wi=wind[i]; wiI=i; }
+    });
+    const fmtD = s => new Date(s).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const setRec = (id, dateId, miniId, val, unit, idx) => {
+      document.getElementById(id).textContent     = val.toFixed(unit==='km/h'?0:1)+' '+unit;
+      document.getElementById(dateId).textContent = fmtD(times[idx]);
+      document.getElementById(miniId).textContent = val.toFixed(unit==='km/h'?0:1)+' '+unit;
+    };
+    if (hi>-999) setRec('rec-hot',  'rec-hot-date',  'rec-hot-mini',  hi, '°C',   hiI);
+    if (lo<999)  setRec('rec-cold', 'rec-cold-date', 'rec-cold-mini', lo, '°C',   loI);
+    if (ri>-1)   setRec('rec-rain', 'rec-rain-date', 'rec-rain-mini', ri, 'mm',   riI);
+    if (wi>-1)   setRec('rec-gust', 'rec-gust-date', 'rec-gust-mini', wi, 'km/h', wiI);
+  } catch(e) { console.error('records:', e); }
+}
+
+/* ── Jahres-Selektor: 2019 – aktuelles Jahr ── */
+function initYearSelect(lat, lon) {
+  const sel = document.getElementById('year-select');
+  sel.innerHTML = '';
+  const curYear = new Date().getFullYear();
+  for (let y = curYear; y >= 2019; y--) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y; sel.appendChild(o);
   }
+  sel.addEventListener('change', e => fetchYearData(activeLat, activeLon, +e.target.value));
+  fetchYearData(lat, lon, curYear);
 }
 
 /* ── Ort-Verwaltung ── */
@@ -411,7 +480,11 @@ async function switchCity(name, lat, lon) {
   activeLat = lat; activeLon = lon; activeName = name;
   updateLocationUI(name, lat, lon);
   setWindy(activeWindyOverlay);
+  const selYear = +document.getElementById('year-select').value;
   await refreshLive();
+  fetch7Days(lat, lon);
+  fetchYearData(lat, lon, selYear);
+  fetchRecords(lat, lon);
 }
 
 async function searchCity() {
@@ -446,7 +519,11 @@ async function resetToHome() {
   const url = new URL(window.location);
   url.searchParams.delete('city');
   window.history.replaceState({}, '', url);
+  const selYear = +document.getElementById('year-select').value;
   await refreshLive();
+  fetch7Days(HOME_LAT, HOME_LON);
+  fetchYearData(HOME_LAT, HOME_LON, selYear);
+  fetchRecords(HOME_LAT, HOME_LON);
 }
 
 /* Enter-Taste im Suchfeld */
@@ -474,6 +551,9 @@ async function initFromURL() {
 loadData();
 initFromURL().then(() => {
   updateLocationUI(activeName, activeLat, activeLon);
+  fetch7Days(activeLat, activeLon);
+  initYearSelect(activeLat, activeLon);
+  fetchRecords(activeLat, activeLon);
   if (activeName !== HOME_NAME) refreshLive();
 });
 
