@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omni-Weather-Hub · Suhl-Goldlauter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <style>
+    body { background: #0f172a; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
+    .stat-value { font-variant-numeric: tabular-nums; }
+    canvas { max-height: 260px; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+
+  <!-- Header -->
+  <header class="mb-8 flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">
+        Omni-Weather-Hub
+      </h1>
+      <p class="text-slate-400 text-sm mt-1">Suhl-Goldlauter, Thüringen · 50.631°N, 10.724°E · ~550 m ü.NN</p>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-slate-400">
+      <span class="live-dot w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+      <span id="last-updated">Lade Daten…</span>
+    </div>
+  </header>
+
+  <!-- Hero Cards -->
+  <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8" id="hero-cards">
+    <div class="card p-4 col-span-2 md:col-span-1 lg:col-span-2 flex flex-col justify-between">
+      <span class="text-slate-400 text-xs uppercase tracking-widest">Temperatur</span>
+      <div>
+        <span class="stat-value text-5xl font-bold text-white" id="cur-temp">–</span>
+        <span class="text-2xl text-slate-300">°C</span>
+      </div>
+      <span class="text-slate-400 text-sm">Gefühlt: <span id="cur-feels" class="text-slate-200">–</span> °C</span>
+    </div>
+    <div class="card p-4">
+      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Luftfeuchte</span>
+      <span class="stat-value text-3xl font-bold text-sky-300" id="cur-humidity">–</span>
+      <span class="text-slate-300"> %</span>
+    </div>
+    <div class="card p-4">
+      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Niederschlag</span>
+      <span class="stat-value text-3xl font-bold text-blue-400" id="cur-precip">–</span>
+      <span class="text-slate-300"> mm</span>
+    </div>
+    <div class="card p-4">
+      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Wind</span>
+      <span class="stat-value text-3xl font-bold text-teal-300" id="cur-wind">–</span>
+      <span class="text-slate-300"> km/h</span>
+      <div class="text-slate-400 text-xs mt-1" id="cur-wind-dir">–</div>
+    </div>
+    <div class="card p-4">
+      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Taupunkt</span>
+      <span class="stat-value text-3xl font-bold text-indigo-300" id="cur-dew">–</span>
+      <span class="text-slate-300"> °C</span>
+    </div>
+    <div class="card p-4">
+      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">UV-Index</span>
+      <span class="stat-value text-3xl font-bold" id="cur-uv">–</span>
+      <div class="text-xs mt-1" id="cur-uv-label"></div>
+    </div>
+  </section>
+
+  <!-- 7-Tage Chart -->
+  <section class="card p-5 mb-6">
+    <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-4">Verlauf letzte 7 Tage</h2>
+    <canvas id="chart-7d"></canvas>
+  </section>
+
+  <!-- Jahresübersicht Chart -->
+  <section class="card p-5 mb-6">
+    <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-3">Jahresübersicht</h2>
+    <div class="flex gap-3 mb-4 flex-wrap">
+      <select id="year-select" class="bg-slate-700 text-slate-200 text-sm rounded px-3 py-1.5 border border-slate-600 focus:outline-none"></select>
+    </div>
+    <canvas id="chart-year"></canvas>
+  </section>
+
+  <!-- Rekord-Karten -->
+  <section class="mb-8">
+    <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-4">Alle-Zeit-Rekorde</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="records-grid">
+      <div class="card p-4">
+        <div class="text-2xl mb-1">🌡️</div>
+        <div class="text-slate-400 text-xs">Heißester Tag</div>
+        <div class="stat-value text-xl font-bold text-orange-400 mt-1" id="rec-hot">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="rec-hot-date">–</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-2xl mb-1">🥶</div>
+        <div class="text-slate-400 text-xs">Kältester Tag</div>
+        <div class="stat-value text-xl font-bold text-cyan-400 mt-1" id="rec-cold">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="rec-cold-date">–</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-2xl mb-1">🌧️</div>
+        <div class="text-slate-400 text-xs">Regenreichster Tag</div>
+        <div class="stat-value text-xl font-bold text-blue-400 mt-1" id="rec-rain">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="rec-rain-date">–</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-2xl mb-1">💨</div>
+        <div class="text-slate-400 text-xs">Stärkste Böe</div>
+        <div class="stat-value text-xl font-bold text-teal-300 mt-1" id="rec-gust">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="rec-gust-date">–</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center text-slate-600 text-xs pb-4">
+    Daten: <a href="https://open-meteo.com" class="underline hover:text-slate-400">Open-Meteo</a> (Open Data, CC BY 4.0) ·
+    Lokale Sensorik: Ecowitt/Froggit ·
+    <span id="footer-updated"></span>
+  </footer>
+
+<script>
+const SNAP = '../weather_snapshot.json';
+
+const WIND_DIRS = ['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function degToDir(deg) {
+  if (deg == null) return '–';
+  return WIND_DIRS[Math.round(deg / 22.5) % 16];
+}
+
+function uvLabel(uv) {
+  if (uv == null) return { text: '–', cls: 'text-slate-400' };
+  if (uv < 3)  return { text: 'Niedrig',   cls: 'text-green-400' };
+  if (uv < 6)  return { text: 'Mittel',    cls: 'text-yellow-400' };
+  if (uv < 8)  return { text: 'Hoch',      cls: 'text-orange-400' };
+  if (uv < 11) return { text: 'Sehr hoch', cls: 'text-red-400' };
+  return { text: 'Extrem', cls: 'text-purple-400' };
+}
+
+function fmt(v, digits = 1) {
+  return v != null ? Number(v).toFixed(digits) : '–';
+}
+
+function fmtDate(ts) {
+  if (!ts) return '–';
+  const d = new Date(ts.replace(' ', 'T'));
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function fmtTs(ts) {
+  if (!ts) return '–';
+  const d = new Date(ts.replace(' ', 'T'));
+  return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+let yearChart = null;
+
+async function loadData() {
+  let data;
+  try {
+    const resp = await fetch(SNAP + '?_=' + Date.now());
+    data = await resp.json();
+  } catch (e) {
+    document.getElementById('last-updated').textContent = 'Fehler beim Laden';
+    return;
+  }
+
+  // Meta
+  const genAt = data.meta?.generated_at ?? '';
+  document.getElementById('last-updated').textContent = 'Stand: ' + genAt;
+  document.getElementById('footer-updated').textContent = 'Aktualisiert: ' + genAt;
+
+  // Current
+  const c = data.current;
+  if (c) {
+    document.getElementById('cur-temp').textContent    = fmt(c.temperature);
+    document.getElementById('cur-feels').textContent   = fmt(c.apparent_temperature);
+    document.getElementById('cur-humidity').textContent = c.humidity ?? '–';
+    document.getElementById('cur-precip').textContent  = fmt(c.precipitation);
+    document.getElementById('cur-wind').textContent    = fmt(c.wind_speed, 0);
+    document.getElementById('cur-wind-dir').textContent = degToDir(c.wind_direction);
+    document.getElementById('cur-dew').textContent     = fmt(c.dew_point);
+
+    const uv = c.uv_index;
+    const uvInfo = uvLabel(uv);
+    const uvEl = document.getElementById('cur-uv');
+    uvEl.textContent = fmt(uv, 1);
+    uvEl.className = 'stat-value text-3xl font-bold ' + uvInfo.cls;
+    const uvLbl = document.getElementById('cur-uv-label');
+    uvLbl.textContent = uvInfo.text;
+    uvLbl.className = 'text-xs mt-1 ' + uvInfo.cls;
+  }
+
+  // 7-Tage Chart
+  const days7 = data.last_7_days ?? [];
+  if (days7.length) {
+    const labels = days7.map(r => {
+      const d = new Date(r.timestamp.replace(' ', 'T'));
+      return d.toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    });
+    // Thin out labels for readability (every 6h)
+    const sparse = labels.map((l, i) => i % 6 === 0 ? l : '');
+
+    const ctx7 = document.getElementById('chart-7d').getContext('2d');
+    new Chart(ctx7, {
+      data: {
+        labels: sparse,
+        datasets: [
+          {
+            type: 'line',
+            label: 'Temperatur (°C)',
+            data: days7.map(r => r.temperature),
+            borderColor: '#f97316',
+            backgroundColor: 'rgba(249,115,22,0.08)',
+            tension: 0.3,
+            pointRadius: 0,
+            yAxisID: 'yTemp',
+          },
+          {
+            type: 'bar',
+            label: 'Niederschlag (mm)',
+            data: days7.map(r => r.precipitation),
+            backgroundColor: 'rgba(59,130,246,0.55)',
+            yAxisID: 'yPrecip',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#64748b', maxRotation: 0, font: { size: 10 } }, grid: { color: '#1e293b' } },
+          yTemp: {
+            position: 'left',
+            ticks: { color: '#f97316', font: { size: 11 } },
+            grid: { color: '#334155' },
+            title: { display: true, text: '°C', color: '#f97316' },
+          },
+          yPrecip: {
+            position: 'right',
+            ticks: { color: '#3b82f6', font: { size: 11 } },
+            grid: { drawOnChartArea: false },
+            title: { display: true, text: 'mm', color: '#3b82f6' },
+            min: 0,
+          },
+        },
+      },
+    });
+  }
+
+  // Jahres-Chart
+  const monthly = data.monthly_stats ?? [];
+  if (monthly.length) {
+    const years = [...new Set(monthly.map(r => r.month.slice(0, 4)))].sort().reverse();
+    const sel = document.getElementById('year-select');
+    years.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      sel.appendChild(opt);
+    });
+
+    function renderYear(year) {
+      const rows = monthly.filter(r => r.month.startsWith(year));
+      const labels = rows.map(r => {
+        const m = parseInt(r.month.slice(5));
+        return ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][m - 1];
+      });
+
+      if (yearChart) yearChart.destroy();
+      const ctx = document.getElementById('chart-year').getContext('2d');
+      yearChart = new Chart(ctx, {
+        data: {
+          labels,
+          datasets: [
+            {
+              type: 'bar',
+              label: 'Niederschlag (mm)',
+              data: rows.map(r => r.total_precip),
+              backgroundColor: 'rgba(59,130,246,0.5)',
+              yAxisID: 'yPrecip',
+            },
+            {
+              type: 'line',
+              label: 'Ø Temperatur (°C)',
+              data: rows.map(r => r.avg_temp),
+              borderColor: '#f97316',
+              backgroundColor: 'transparent',
+              tension: 0.3,
+              pointRadius: 4,
+              yAxisID: 'yTemp',
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#334155' } },
+            yPrecip: {
+              position: 'left',
+              ticks: { color: '#3b82f6', font: { size: 11 } },
+              grid: { color: '#334155' },
+              title: { display: true, text: 'mm', color: '#3b82f6' },
+              min: 0,
+            },
+            yTemp: {
+              position: 'right',
+              ticks: { color: '#f97316', font: { size: 11 } },
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: '°C', color: '#f97316' },
+            },
+          },
+        },
+      });
+    }
+
+    renderYear(years[0]);
+    sel.addEventListener('change', e => renderYear(e.target.value));
+  }
+
+  // Rekorde
+  const rec = data.records ?? {};
+  if (rec.hottest) {
+    document.getElementById('rec-hot').textContent = fmt(rec.hottest.temperature) + ' °C';
+    document.getElementById('rec-hot-date').textContent = fmtDate(rec.hottest.timestamp);
+  }
+  if (rec.coldest) {
+    document.getElementById('rec-cold').textContent = fmt(rec.coldest.temperature) + ' °C';
+    document.getElementById('rec-cold-date').textContent = fmtDate(rec.coldest.timestamp);
+  }
+  if (rec.wettest_day) {
+    document.getElementById('rec-rain').textContent = fmt(rec.wettest_day.total) + ' mm';
+    document.getElementById('rec-rain-date').textContent = fmtDate(rec.wettest_day.day + ' 00:00:00');
+  }
+  if (rec.stormiest) {
+    document.getElementById('rec-gust').textContent = fmt(rec.stormiest.wind_gust, 0) + ' km/h';
+    document.getElementById('rec-gust-date').textContent = fmtDate(rec.stormiest.timestamp);
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>

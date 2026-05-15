@@ -1,0 +1,50 @@
+# PROJEKT-SPEZIFIKATION: OMNI-WEATHER-HUB
+
+## 1. Zielsetzung & Kernfeatures
+Aufbau einer lückenlosen, hyperlokalen Wetter-Zeithistorie für den Standort **Suhl-Goldlauter (Thüringen)** sowie die Bereitstellung dieser Daten für zwei unterschiedliche Konsumenten:
+1. **Statische HTML-Visualisierung (GitHub Pages):** Ein ressourcenschonendes, modernes Dashboard im Dark-Mode-Design.
+2. **OpenClaw KI-Agent Integration:** Ein dediziertes CLI-Tool (Skill), das dem lokalen OpenClaw-Agenten erlaubt, strukturierte historische Abfragen (z. B. "Regen am Männertag 2019") direkt auf der Datenbank auszuführen.
+
+---
+
+## 2. Technische Roadmap & Phasen
+
+### Phase 1: Die historische Daten-Pipeline (Public Open Data)
+* **Ziel:** Sofortige Verfügbarkeit aller Wetterdaten ab dem **01.01.2019** bis zur Gegenwart für Suhl-Goldlauter.
+* **Quelle:** Open-Meteo API (Historical Weather API & Forecast API).
+* **Koordinaten Suhl-Goldlauter:** Breitengrad `50.631`, Längengrad `10.724` (Höhe ca. 500-600m).
+* **Metriken:** Temperatur (2m), Niederschlag (Rain), Windgeschwindigkeit, Windrichtung, Luftfeuchtigkeit.
+
+### Phase 2: HTML-Generierung & GitHub Pages Export
+* **Ziel:** Ein stündlicher Export der wichtigsten historischen Trends und aktuellen Werte als kompakte statische JSON-Datei (`weather_snapshot.json`).
+* **Frontend:** Ein reines HTML5/CSS3-Dashboard (unter Nutzung von Tailwind und Chart.js), das diese JSON-Datei via GitHub Pages oder einfachem Nginx-Webspace lädt.
+
+### Phase 3: Hardware-Inbound-Schnittstelle (Ecowitt/Froggit)
+* **Ziel:** Ein FastAPI-Endpunkt auf dem Hetzner-Server, der HTTP-POST-Requests einer physikalischen Wetterstation (Ecowitt-Protokoll) entgegennimmt.
+* **Logik:** Sobald lokale Sensordaten eingehen, werden diese zeitsynchron mit höchster Priorität in die SQLite-Datenbank eingepflegt.
+
+---
+
+## 3. Datenstruktur (SQLite Schema)
+
+CREATE TABLE IF NOT EXISTS weather_logs (
+    timestamp TEXT PRIMARY KEY,           -- ISO8601 Format: YYYY-MM-DD HH:MM:SS
+    source TEXT,                          -- 'open-meteo' oder 'local_sensor'
+    
+    -- Kernmesswerte (Basis)
+    temperature REAL,                     -- Gemessene Lufttemperatur in °C
+    humidity INTEGER,                     -- Relative Luftfeuchtigkeit in %
+    precipitation REAL,                   -- Niederschlagsmenge in mm
+    wind_speed REAL,                      -- Konstante Windgeschwindigkeit in km/h
+    wind_direction INTEGER,               -- Windrichtung in Grad (0-360)
+    
+    -- Erweiterte Hardware-Messwerte (Speziell für Wittboy/Froggit)
+    wind_gust REAL,                       -- Windböen (Maximalgeschwindigkeit) in km/h
+    solar_radiation REAL,                 -- Sonneneinstrahlung in W/m²
+    uv_index REAL,                        -- UV-Index (0 bis 11+)
+    
+    -- Berechnete & Angereicherte Werte (Vorteil für den KI-Agenten)
+    apparent_temperature REAL,            -- Gefühlte Temperatur (Windchill / Heat Index) in °C
+    dew_point REAL,                       -- Taupunkt in °C (wichtig für Schwüle- & Feuchtigkeitsanalysen)
+    uv_alert INTEGER DEFAULT 0            -- Binärer Warner (1 = Kritischer UV-Wert für Sonnenschutz)
+);
