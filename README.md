@@ -98,7 +98,7 @@ bash hetzner/setup.sh
 curl http://SERVER_IP:8765/health
 ```
 
-**Ecowitt-Station konfigurieren:**  
+**Ecowitt-Station konfigurieren:**
 In der Ecowitt/WS View App: *Customized Server → Server IP: `46.225.236.11` · Port: `8765` · Path: `/ecowitt`*
 
 ### OpenClaw CLI-Skill
@@ -124,7 +124,7 @@ python hetzner/skill/weather_query.py --json "November 2023"
 
 ## Datenquelle & Lizenz
 
-Wetterdaten: [Open-Meteo.com](https://open-meteo.com) — Open Data unter [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).  
-Code: [MIT License](LICENSE)
+Wetterdaten: [Open-Meteo.com](https://open-meteo.com) — Open Data unter [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Code: [MIT License](LICENSE) · © 2026 Cortex AI Solutions
 
 **Standort:** Suhl-Goldlauter, Thüringen, Deutschland · 50.631°N, 10.724°E · ~550 m ü.NN
