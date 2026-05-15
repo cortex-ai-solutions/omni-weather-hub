@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-05-15 16:18:33 UTC",
+    "generated_at": "2026-05-15 19:07:54 UTC",
     "location": "Suhl-Goldlauter, Thüringen",
     "lat": 50.631,
     "lon": 10.724,
@@ -9,49 +9,19 @@
   "current": {
     "timestamp": "2026-05-15 23:00:00",
     "source": "open-meteo",
-    "temperature": 3.8,
-    "humidity": 87,
+    "temperature": 3.6,
+    "humidity": 88,
     "precipitation": 0.0,
     "wind_speed": 2.6,
-    "wind_direction": 34,
+    "wind_direction": 16,
     "wind_gust": 2.9,
     "solar_radiation": 0.0,
     "uv_index": 0.0,
-    "apparent_temperature": 1.6,
+    "apparent_temperature": 1.4,
     "dew_point": 1.8,
     "uv_alert": 0
   },
   "last_7_days": [
-    {
-      "timestamp": "2026-05-08 17:00:00",
-      "temperature": 10.3,
-      "precipitation": 0.0,
-      "wind_speed": 9.2,
-      "wind_direction": 64,
-      "humidity": 75,
-      "apparent_temperature": 8.0,
-      "uv_index": 3.0
-    },
-    {
-      "timestamp": "2026-05-08 18:00:00",
-      "temperature": 10.1,
-      "precipitation": 0.0,
-      "wind_speed": 11.3,
-      "wind_direction": 63,
-      "humidity": 76,
-      "apparent_temperature": 7.5,
-      "uv_index": 1.7
-    },
-    {
-      "timestamp": "2026-05-08 19:00:00",
-      "temperature": 9.6,
-      "precipitation": 0.0,
-      "wind_speed": 11.6,
-      "wind_direction": 60,
-      "humidity": 77,
-      "apparent_temperature": 6.9,
-      "uv_index": 0.75
-    },
     {
       "timestamp": "2026-05-08 20:00:00",
       "temperature": 8.9,
@@ -1690,7 +1660,7 @@
       "wind_direction": 297,
       "humidity": 81,
       "apparent_temperature": 4.4,
-      "uv_index": 5.6
+      "uv_index": 5.75
     },
     {
       "timestamp": "2026-05-15 16:00:00",
@@ -1704,691 +1674,82 @@
     },
     {
       "timestamp": "2026-05-15 17:00:00",
-      "temperature": 7.3,
+      "temperature": 8.1,
       "precipitation": 0.1,
       "wind_speed": 4.0,
-      "wind_direction": 297,
-      "humidity": 79,
-      "apparent_temperature": 5.3,
-      "uv_index": 3.5
+      "wind_direction": 270,
+      "humidity": 73,
+      "apparent_temperature": 6.1,
+      "uv_index": 3.7
     },
     {
       "timestamp": "2026-05-15 18:00:00",
-      "temperature": 7.8,
+      "temperature": 8.0,
       "precipitation": 0.0,
-      "wind_speed": 5.3,
-      "wind_direction": 332,
-      "humidity": 81,
-      "apparent_temperature": 5.8,
+      "wind_speed": 6.7,
+      "wind_direction": 306,
+      "humidity": 82,
+      "apparent_temperature": 5.9,
       "uv_index": 1.9
     },
     {
       "timestamp": "2026-05-15 19:00:00",
-      "temperature": 7.7,
+      "temperature": 8.2,
       "precipitation": 0.0,
-      "wind_speed": 4.7,
-      "wind_direction": 356,
-      "humidity": 78,
-      "apparent_temperature": 5.6,
-      "uv_index": 1.6
+      "wind_speed": 3.6,
+      "wind_direction": 315,
+      "humidity": 74,
+      "apparent_temperature": 6.2,
+      "uv_index": 1.2
     },
     {
       "timestamp": "2026-05-15 20:00:00",
-      "temperature": 7.3,
+      "temperature": 7.6,
       "precipitation": 0.0,
-      "wind_speed": 2.6,
-      "wind_direction": 326,
-      "humidity": 81,
-      "apparent_temperature": 5.5,
+      "wind_speed": 4.5,
+      "wind_direction": 331,
+      "humidity": 76,
+      "apparent_temperature": 5.4,
       "uv_index": 0.7
     },
     {
       "timestamp": "2026-05-15 21:00:00",
-      "temperature": 5.9,
+      "temperature": 6.0,
       "precipitation": 0.0,
-      "wind_speed": 1.6,
-      "wind_direction": 333,
-      "humidity": 86,
-      "apparent_temperature": 4.2,
+      "wind_speed": 2.4,
+      "wind_direction": 63,
+      "humidity": 83,
+      "apparent_temperature": 4.1,
       "uv_index": 0.15
     },
     {
       "timestamp": "2026-05-15 22:00:00",
-      "temperature": 4.5,
+      "temperature": 4.3,
       "precipitation": 0.0,
-      "wind_speed": 1.5,
-      "wind_direction": 45,
-      "humidity": 87,
-      "apparent_temperature": 2.6,
+      "wind_speed": 3.0,
+      "wind_direction": 76,
+      "humidity": 86,
+      "apparent_temperature": 2.1,
       "uv_index": 0.0
     },
     {
       "timestamp": "2026-05-15 23:00:00",
-      "temperature": 3.8,
+      "temperature": 3.6,
       "precipitation": 0.0,
       "wind_speed": 2.6,
-      "wind_direction": 34,
-      "humidity": 87,
-      "apparent_temperature": 1.6,
+      "wind_direction": 16,
+      "humidity": 88,
+      "apparent_temperature": 1.4,
       "uv_index": 0.0
     }
   ],
   "monthly_stats": [
     {
-      "month": "2019-01",
-      "avg_temp": -2.8,
-      "total_precip": 155.3,
-      "max_temp": 3.7,
-      "min_temp": -12.8
-    },
-    {
-      "month": "2019-02",
-      "avg_temp": 1.2,
-      "total_precip": 44.8,
-      "max_temp": 12.4,
-      "min_temp": -5.8
-    },
-    {
-      "month": "2019-03",
-      "avg_temp": 3.1,
-      "total_precip": 121.9,
-      "max_temp": 14.6,
-      "min_temp": -3.0
-    },
-    {
-      "month": "2019-04",
-      "avg_temp": 7.7,
-      "total_precip": 42.2,
-      "max_temp": 21.5,
-      "min_temp": -3.2
-    },
-    {
-      "month": "2019-05",
-      "avg_temp": 8.7,
-      "total_precip": 131.0,
-      "max_temp": 18.6,
-      "min_temp": -1.3
-    },
-    {
-      "month": "2019-06",
-      "avg_temp": 18.1,
-      "total_precip": 55.1,
-      "max_temp": 30.5,
-      "min_temp": 6.7
-    },
-    {
-      "month": "2019-07",
-      "avg_temp": 17.1,
-      "total_precip": 59.7,
-      "max_temp": 32.8,
-      "min_temp": 7.3
-    },
-    {
-      "month": "2019-08",
-      "avg_temp": 17.4,
-      "total_precip": 72.5,
-      "max_temp": 27.0,
-      "min_temp": 8.3
-    },
-    {
-      "month": "2019-09",
-      "avg_temp": 12.2,
-      "total_precip": 90.4,
-      "max_temp": 21.8,
-      "min_temp": 3.3
-    },
-    {
-      "month": "2019-10",
-      "avg_temp": 8.9,
-      "total_precip": 149.8,
-      "max_temp": 19.9,
-      "min_temp": -1.5
-    },
-    {
-      "month": "2019-11",
-      "avg_temp": 3.2,
-      "total_precip": 96.1,
-      "max_temp": 11.8,
-      "min_temp": -2.9
-    },
-    {
-      "month": "2019-12",
-      "avg_temp": 1.0,
-      "total_precip": 93.2,
-      "max_temp": 9.0,
-      "min_temp": -5.8
-    },
-    {
-      "month": "2020-01",
-      "avg_temp": 0.5,
-      "total_precip": 84.2,
-      "max_temp": 9.4,
-      "min_temp": -5.3
-    },
-    {
-      "month": "2020-02",
-      "avg_temp": 1.8,
-      "total_precip": 188.1,
-      "max_temp": 11.1,
-      "min_temp": -8.6
-    },
-    {
-      "month": "2020-03",
-      "avg_temp": 2.3,
-      "total_precip": 105.1,
-      "max_temp": 13.8,
-      "min_temp": -8.1
-    },
-    {
-      "month": "2020-04",
-      "avg_temp": 8.5,
-      "total_precip": 20.3,
-      "max_temp": 18.3,
-      "min_temp": -6.2
-    },
-    {
-      "month": "2020-05",
-      "avg_temp": 9.6,
-      "total_precip": 54.4,
-      "max_temp": 19.1,
-      "min_temp": -2.7
-    },
-    {
-      "month": "2020-06",
-      "avg_temp": 14.5,
-      "total_precip": 158.2,
-      "max_temp": 23.5,
-      "min_temp": 5.2
-    },
-    {
-      "month": "2020-07",
-      "avg_temp": 15.8,
-      "total_precip": 54.6,
-      "max_temp": 26.8,
-      "min_temp": 7.3
-    },
-    {
-      "month": "2020-08",
-      "avg_temp": 18.1,
-      "total_precip": 130.4,
-      "max_temp": 29.6,
-      "min_temp": 9.4
-    },
-    {
-      "month": "2020-09",
-      "avg_temp": 13.4,
-      "total_precip": 43.4,
-      "max_temp": 25.8,
-      "min_temp": 3.5
-    },
-    {
-      "month": "2020-10",
-      "avg_temp": 7.7,
-      "total_precip": 145.7,
-      "max_temp": 19.4,
-      "min_temp": 1.2
-    },
-    {
-      "month": "2020-11",
-      "avg_temp": 3.5,
-      "total_precip": 32.2,
-      "max_temp": 15.8,
-      "min_temp": -4.8
-    },
-    {
-      "month": "2020-12",
-      "avg_temp": 0.4,
-      "total_precip": 79.3,
-      "max_temp": 9.3,
-      "min_temp": -7.3
-    },
-    {
-      "month": "2021-01",
-      "avg_temp": -2.6,
-      "total_precip": 120.6,
-      "max_temp": 6.4,
-      "min_temp": -10.8
-    },
-    {
-      "month": "2021-02",
-      "avg_temp": -1.4,
-      "total_precip": 78.1,
-      "max_temp": 11.9,
-      "min_temp": -15.5
-    },
-    {
-      "month": "2021-03",
-      "avg_temp": 1.4,
-      "total_precip": 62.2,
-      "max_temp": 17.8,
-      "min_temp": -8.9
-    },
-    {
-      "month": "2021-04",
-      "avg_temp": 3.2,
-      "total_precip": 55.1,
-      "max_temp": 16.0,
-      "min_temp": -4.8
-    },
-    {
-      "month": "2021-05",
-      "avg_temp": 8.0,
-      "total_precip": 148.4,
-      "max_temp": 22.3,
-      "min_temp": -1.4
-    },
-    {
-      "month": "2021-06",
-      "avg_temp": 17.1,
-      "total_precip": 152.5,
-      "max_temp": 27.9,
-      "min_temp": 7.6
-    },
-    {
-      "month": "2021-07",
-      "avg_temp": 15.8,
-      "total_precip": 156.3,
-      "max_temp": 24.0,
-      "min_temp": 9.9
-    },
-    {
-      "month": "2021-08",
-      "avg_temp": 14.0,
-      "total_precip": 174.8,
-      "max_temp": 23.8,
-      "min_temp": 8.0
-    },
-    {
-      "month": "2021-09",
-      "avg_temp": 13.6,
-      "total_precip": 41.9,
-      "max_temp": 22.5,
-      "min_temp": 3.7
-    },
-    {
-      "month": "2021-10",
-      "avg_temp": 7.2,
-      "total_precip": 63.5,
-      "max_temp": 19.0,
-      "min_temp": -0.2
-    },
-    {
-      "month": "2021-11",
-      "avg_temp": 2.2,
-      "total_precip": 66.0,
-      "max_temp": 8.6,
-      "min_temp": -4.8
-    },
-    {
-      "month": "2021-12",
-      "avg_temp": -0.4,
-      "total_precip": 90.3,
-      "max_temp": 9.5,
-      "min_temp": -11.4
-    },
-    {
-      "month": "2022-01",
-      "avg_temp": -0.3,
-      "total_precip": 134.2,
-      "max_temp": 8.4,
-      "min_temp": -10.8
-    },
-    {
-      "month": "2022-02",
-      "avg_temp": 0.8,
-      "total_precip": 137.5,
-      "max_temp": 8.4,
-      "min_temp": -6.7
-    },
-    {
-      "month": "2022-03",
-      "avg_temp": 2.1,
-      "total_precip": 18.3,
-      "max_temp": 14.2,
-      "min_temp": -7.3
-    },
-    {
-      "month": "2022-04",
-      "avg_temp": 4.7,
-      "total_precip": 115.6,
-      "max_temp": 18.4,
-      "min_temp": -6.6
-    },
-    {
-      "month": "2022-05",
-      "avg_temp": 12.6,
-      "total_precip": 42.4,
-      "max_temp": 23.2,
-      "min_temp": 2.1
-    },
-    {
-      "month": "2022-06",
-      "avg_temp": 16.9,
-      "total_precip": 41.6,
-      "max_temp": 29.9,
-      "min_temp": 4.3
-    },
-    {
-      "month": "2022-07",
-      "avg_temp": 17.6,
-      "total_precip": 42.9,
-      "max_temp": 33.8,
-      "min_temp": 8.2
-    },
-    {
-      "month": "2022-08",
-      "avg_temp": 19.0,
-      "total_precip": 45.4,
-      "max_temp": 30.6,
-      "min_temp": 10.6
-    },
-    {
-      "month": "2022-09",
-      "avg_temp": 11.3,
-      "total_precip": 120.3,
-      "max_temp": 23.1,
-      "min_temp": 2.2
-    },
-    {
-      "month": "2022-10",
-      "avg_temp": 10.6,
-      "total_precip": 58.1,
-      "max_temp": 20.0,
-      "min_temp": 2.7
-    },
-    {
-      "month": "2022-11",
-      "avg_temp": 4.3,
-      "total_precip": 52.6,
-      "max_temp": 13.8,
-      "min_temp": -7.0
-    },
-    {
-      "month": "2022-12",
-      "avg_temp": -0.9,
-      "total_precip": 105.7,
-      "max_temp": 12.6,
-      "min_temp": -17.0
-    },
-    {
-      "month": "2023-01",
-      "avg_temp": 0.3,
-      "total_precip": 123.9,
-      "max_temp": 10.6,
-      "min_temp": -12.4
-    },
-    {
-      "month": "2023-02",
-      "avg_temp": -0.3,
-      "total_precip": 75.6,
-      "max_temp": 10.4,
-      "min_temp": -9.6
-    },
-    {
-      "month": "2023-03",
-      "avg_temp": 2.6,
-      "total_precip": 149.5,
-      "max_temp": 13.7,
-      "min_temp": -10.4
-    },
-    {
-      "month": "2023-04",
-      "avg_temp": 4.9,
-      "total_precip": 77.3,
-      "max_temp": 17.8,
-      "min_temp": -5.2
-    },
-    {
-      "month": "2023-05",
-      "avg_temp": 11.1,
-      "total_precip": 41.4,
-      "max_temp": 22.8,
-      "min_temp": 0.9
-    },
-    {
-      "month": "2023-06",
-      "avg_temp": 16.6,
-      "total_precip": 69.1,
-      "max_temp": 27.5,
-      "min_temp": 6.1
-    },
-    {
-      "month": "2023-07",
-      "avg_temp": 16.9,
-      "total_precip": 92.7,
-      "max_temp": 29.8,
-      "min_temp": 8.1
-    },
-    {
-      "month": "2023-08",
-      "avg_temp": 16.4,
-      "total_precip": 147.2,
-      "max_temp": 27.7,
-      "min_temp": 7.4
-    },
-    {
-      "month": "2023-09",
-      "avg_temp": 16.1,
-      "total_precip": 35.2,
-      "max_temp": 26.1,
-      "min_temp": 5.8
-    },
-    {
-      "month": "2023-10",
-      "avg_temp": 9.7,
-      "total_precip": 127.7,
-      "max_temp": 20.6,
-      "min_temp": -0.6
-    },
-    {
-      "month": "2023-11",
-      "avg_temp": 2.4,
-      "total_precip": 161.9,
-      "max_temp": 10.3,
-      "min_temp": -9.5
-    },
-    {
-      "month": "2023-12",
-      "avg_temp": 0.7,
-      "total_precip": 151.2,
-      "max_temp": 6.1,
-      "min_temp": -8.4
-    },
-    {
-      "month": "2024-01",
-      "avg_temp": -1.4,
-      "total_precip": 128.5,
-      "max_temp": 7.4,
-      "min_temp": -14.5
-    },
-    {
-      "month": "2024-02",
-      "avg_temp": 3.9,
-      "total_precip": 130.6,
-      "max_temp": 11.9,
-      "min_temp": -1.8
-    },
-    {
-      "month": "2024-03",
-      "avg_temp": 5.4,
-      "total_precip": 63.4,
-      "max_temp": 18.5,
-      "min_temp": -2.4
-    },
-    {
-      "month": "2024-04",
-      "avg_temp": 7.4,
-      "total_precip": 77.2,
-      "max_temp": 22.4,
-      "min_temp": -4.7
-    },
-    {
-      "month": "2024-05",
-      "avg_temp": 12.6,
-      "total_precip": 145.8,
-      "max_temp": 22.2,
-      "min_temp": 4.3
-    },
-    {
-      "month": "2024-06",
-      "avg_temp": 14.5,
-      "total_precip": 100.8,
-      "max_temp": 25.2,
-      "min_temp": 4.0
-    },
-    {
-      "month": "2024-07",
-      "avg_temp": 16.7,
-      "total_precip": 107.5,
-      "max_temp": 26.8,
-      "min_temp": 7.7
-    },
-    {
-      "month": "2024-08",
-      "avg_temp": 18.3,
-      "total_precip": 96.5,
-      "max_temp": 28.6,
-      "min_temp": 8.9
-    },
-    {
-      "month": "2024-09",
-      "avg_temp": 13.5,
-      "total_precip": 119.4,
-      "max_temp": 27.4,
-      "min_temp": 2.2
-    },
-    {
-      "month": "2024-10",
-      "avg_temp": 9.2,
-      "total_precip": 66.8,
-      "max_temp": 17.6,
-      "min_temp": 1.8
-    },
-    {
-      "month": "2024-11",
-      "avg_temp": 2.6,
-      "total_precip": 73.8,
-      "max_temp": 10.6,
-      "min_temp": -7.7
-    },
-    {
-      "month": "2024-12",
-      "avg_temp": -0.5,
-      "total_precip": 85.4,
-      "max_temp": 7.5,
-      "min_temp": -8.6
-    },
-    {
-      "month": "2025-01",
-      "avg_temp": -0.5,
-      "total_precip": 107.6,
-      "max_temp": 7.7,
-      "min_temp": -10.8
-    },
-    {
-      "month": "2025-02",
-      "avg_temp": -0.9,
-      "total_precip": 23.7,
-      "max_temp": 9.1,
-      "min_temp": -9.6
-    },
-    {
-      "month": "2025-03",
-      "avg_temp": 4.2,
-      "total_precip": 23.8,
-      "max_temp": 17.7,
-      "min_temp": -5.0
-    },
-    {
-      "month": "2025-04",
-      "avg_temp": 8.8,
-      "total_precip": 45.2,
-      "max_temp": 21.5,
-      "min_temp": -4.6
-    },
-    {
-      "month": "2025-05",
-      "avg_temp": 10.6,
-      "total_precip": 68.1,
-      "max_temp": 23.2,
-      "min_temp": 1.2
-    },
-    {
-      "month": "2025-06",
-      "avg_temp": 16.5,
-      "total_precip": 58.2,
-      "max_temp": 27.6,
-      "min_temp": 4.1
-    },
-    {
-      "month": "2025-07",
-      "avg_temp": 16.2,
-      "total_precip": 91.1,
-      "max_temp": 31.4,
-      "min_temp": 8.8
-    },
-    {
-      "month": "2025-08",
-      "avg_temp": 16.5,
-      "total_precip": 49.6,
-      "max_temp": 32.5,
-      "min_temp": 6.3
-    },
-    {
-      "month": "2025-09",
-      "avg_temp": 12.3,
-      "total_precip": 86.0,
-      "max_temp": 24.0,
-      "min_temp": 4.7
-    },
-    {
-      "month": "2025-10",
-      "avg_temp": 7.2,
-      "total_precip": 116.1,
-      "max_temp": 13.6,
-      "min_temp": 0.9
-    },
-    {
-      "month": "2025-11",
-      "avg_temp": 2.3,
-      "total_precip": 40.5,
-      "max_temp": 12.1,
-      "min_temp": -10.6
-    },
-    {
-      "month": "2025-12",
-      "avg_temp": 1.0,
-      "total_precip": 28.6,
-      "max_temp": 10.1,
-      "min_temp": -8.3
-    },
-    {
-      "month": "2026-01",
-      "avg_temp": -3.2,
-      "total_precip": 75.9,
-      "max_temp": 5.8,
-      "min_temp": -13.8
-    },
-    {
-      "month": "2026-02",
-      "avg_temp": 1.0,
-      "total_precip": 82.2,
-      "max_temp": 13.4,
-      "min_temp": -9.6
-    },
-    {
-      "month": "2026-03",
-      "avg_temp": 4.5,
-      "total_precip": 48.2,
-      "max_temp": 16.0,
-      "min_temp": -4.2
-    },
-    {
       "month": "2026-04",
-      "avg_temp": 7.1,
-      "total_precip": 38.6,
+      "avg_temp": 8.1,
+      "total_precip": 21.4,
       "max_temp": 17.1,
-      "min_temp": -2.8
+      "min_temp": 0.6
     },
     {
       "month": "2026-05",
@@ -2400,20 +1761,20 @@
   ],
   "records": {
     "hottest": {
-      "timestamp": "2022-07-20 16:00:00",
-      "temperature": 33.8
+      "timestamp": "2026-05-02 17:00:00",
+      "temperature": 22.6
     },
     "coldest": {
-      "timestamp": "2022-12-13 10:00:00",
-      "temperature": -17.0
+      "timestamp": "2026-05-12 07:00:00",
+      "temperature": -0.4
     },
     "wettest_day": {
-      "day": "2021-07-09",
-      "total": 41.0
+      "day": "2026-05-05",
+      "total": 16.0
     },
     "stormiest": {
-      "timestamp": "2020-02-10 07:00:00",
-      "wind_gust": 118.1
+      "timestamp": "2026-04-29 00:00:00",
+      "wind_gust": 56.5
     }
   }
 }
