@@ -8,120 +8,208 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
   <style>
     body { background: #0f172a; }
     .card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
     .stat-value { font-variant-numeric: tabular-nums; }
-    canvas { max-height: 260px; }
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
     .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
 
-    /* Radar Modal */
-    #radar-modal { display: none; }
-    #radar-modal.open { display: flex; }
-    #radar-map { height: 420px; border-radius: 0.75rem; overflow: hidden; }
-    .leaflet-container { background: #0f172a; }
+    /* Radar map */
+    #radar-map { height: 360px; border-radius: 0.75rem; overflow: hidden; }
+    .leaflet-container { background: #1e293b; }
+
+    /* Windy iframe */
+    #windy-frame { border: none; border-radius: 0.75rem; width: 100%; height: 360px; display: block; }
 
     /* Slider */
     #radar-slider { accent-color: #3b82f6; }
 
-    /* Tab active */
-    .radar-tab.active { background: #3b82f6; color: #fff; }
-    .radar-tab { transition: background 0.15s; }
+    /* Charts */
+    .chart-wrap canvas { max-height: 220px; }
+
+    /* Tab pill */
+    .tab-pill { transition: all 0.15s; cursor: pointer; }
+    .tab-pill.active { background: #3b82f6; color: #fff; }
   </style>
 </head>
-<body class="text-slate-100 min-h-screen p-4 md:p-8 font-sans">
+<body class="text-slate-100 min-h-screen font-sans">
 
-  <!-- Header -->
-  <header class="mb-8 flex items-center justify-between flex-wrap gap-4">
-    <div>
-      <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">
-        Omni-Weather-Hub
-      </h1>
-      <p class="text-slate-400 text-sm mt-1">Suhl-Goldlauter, Thüringen · 50.631°N, 10.724°E · ~550 m ü.NN</p>
-    </div>
-    <div class="flex items-center gap-3 flex-wrap">
-      <!-- Radar Button -->
-      <button id="btn-radar"
-        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-lg">
-        🌧️ Regenradar
-      </button>
-      <div class="flex items-center gap-2 text-xs text-slate-400">
-        <span class="live-dot w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-        <span id="last-updated">Lade Daten…</span>
+<!-- ═══════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════ -->
+<header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 md:px-8 py-3">
+  <div class="max-w-screen-xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+
+    <!-- Logo + Titel -->
+    <div class="flex items-center gap-3">
+      <!-- Cortex AI Logo SVG (dark-mode angepasst) -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" class="h-9 w-auto shrink-0">
+        <defs>
+          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#50E3C2;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <path d="M30,50 Q50,20 70,50 T110,50" stroke="url(#grad)" stroke-width="8" fill="none"/>
+        <circle cx="30" cy="50" r="5" fill="#4A90E2"/>
+        <circle cx="70" cy="50" r="5" fill="#4A90E2"/>
+        <circle cx="110" cy="50" r="5" fill="#50E3C2"/>
+        <text x="130" y="46" font-family="Arial,sans-serif" font-size="24" font-weight="bold" fill="#f1f5f9">Cortex AI</text>
+        <text x="130" y="70" font-family="Arial,sans-serif" font-size="18" fill="#94a3b8">Solutions</text>
+      </svg>
+      <div class="border-l border-slate-700 pl-3">
+        <div class="text-white font-bold leading-tight text-sm md:text-base">Omni-Weather-Hub</div>
+        <div class="text-slate-400 text-xs leading-tight">Suhl-Goldlauter · 50.631°N 10.724°E · ~550 m</div>
       </div>
     </div>
-  </header>
 
-  <!-- Hero Cards -->
-  <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-    <div class="card p-4 col-span-2 md:col-span-1 lg:col-span-2 flex flex-col justify-between">
-      <span class="text-slate-400 text-xs uppercase tracking-widest">Temperatur</span>
-      <div>
-        <span class="stat-value text-5xl font-bold text-white" id="cur-temp">–</span>
-        <span class="text-2xl text-slate-300">°C</span>
+    <!-- Status -->
+    <div class="flex items-center gap-2 text-xs text-slate-400">
+      <span class="live-dot w-2 h-2 rounded-full bg-emerald-400 inline-block shrink-0"></span>
+      <span id="last-updated">Lade Daten…</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════
+     HAUPTINHALT
+══════════════════════════════════════════════════ -->
+<main class="max-w-screen-xl mx-auto px-4 md:px-8 py-6 space-y-6">
+
+  <!-- ── Zeile 1: Radar | Aktuell | Vorhersage ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+    <!-- PANEL LINKS: Live-Radar -->
+    <div class="card p-4 flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">🌧️ Live-Radar</h2>
+        <span id="radar-time-label" class="text-slate-500 text-xs">Lade…</span>
       </div>
-      <span class="text-slate-400 text-sm">Gefühlt: <span id="cur-feels" class="text-slate-200">–</span> °C</span>
-    </div>
-    <div class="card p-4">
-      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Luftfeuchte</span>
-      <span class="stat-value text-3xl font-bold text-sky-300" id="cur-humidity">–</span>
-      <span class="text-slate-300"> %</span>
-    </div>
-    <div class="card p-4">
-      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Niederschlag</span>
-      <span class="stat-value text-3xl font-bold text-blue-400" id="cur-precip">–</span>
-      <span class="text-slate-300"> mm</span>
-    </div>
-    <div class="card p-4">
-      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Wind</span>
-      <span class="stat-value text-3xl font-bold text-teal-300" id="cur-wind">–</span>
-      <span class="text-slate-300"> km/h</span>
-      <div class="text-slate-400 text-xs mt-1" id="cur-wind-dir">–</div>
-    </div>
-    <div class="card p-4">
-      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">Taupunkt</span>
-      <span class="stat-value text-3xl font-bold text-indigo-300" id="cur-dew">–</span>
-      <span class="text-slate-300"> °C</span>
-    </div>
-    <div class="card p-4">
-      <span class="text-slate-400 text-xs uppercase tracking-widest block mb-2">UV-Index</span>
-      <span class="stat-value text-3xl font-bold" id="cur-uv">–</span>
-      <div class="text-xs mt-1" id="cur-uv-label"></div>
-    </div>
-  </section>
 
-  <!-- 7-Tage Chart -->
-  <section class="card p-5 mb-6">
-    <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-4">Verlauf letzte 7 Tage</h2>
-    <canvas id="chart-7d"></canvas>
-  </section>
+      <div id="radar-map"></div>
 
-  <!-- Jahresübersicht Chart -->
-  <section class="card p-5 mb-6">
-    <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-3">Jahresübersicht</h2>
-    <div class="flex gap-3 mb-4 flex-wrap">
-      <select id="year-select" class="bg-slate-700 text-slate-200 text-sm rounded px-3 py-1.5 border border-slate-600 focus:outline-none"></select>
+      <!-- Controls -->
+      <div class="flex items-center gap-2">
+        <button id="radar-play"
+          class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-md w-16 shrink-0">
+          ▶ Play
+        </button>
+        <input id="radar-slider" type="range" min="0" value="0" class="flex-1 h-1.5 rounded" />
+        <span id="radar-frame-label" class="text-slate-500 text-xs shrink-0 w-14 text-right">–</span>
+      </div>
+
+      <!-- Legende -->
+      <div class="flex items-center gap-1 text-xs text-slate-600 flex-wrap">
+        <span class="w-3 h-2 rounded inline-block" style="background:#00d4ff"></span><span>leicht</span>
+        <span class="w-3 h-2 rounded inline-block ml-1" style="background:#0080ff"></span><span>mäßig</span>
+        <span class="w-3 h-2 rounded inline-block ml-1" style="background:#004cff"></span><span>stark</span>
+        <span class="w-3 h-2 rounded inline-block ml-1" style="background:#8000ff"></span><span>extrem</span>
+        <span class="ml-auto text-slate-600">RainViewer</span>
+      </div>
     </div>
-    <canvas id="chart-year"></canvas>
-  </section>
 
-  <!-- Rekord-Karten -->
-  <section class="mb-8">
+    <!-- PANEL MITTE: Aktuell -->
+    <div class="card p-5 flex flex-col gap-4">
+      <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">Aktuell</h2>
+
+      <!-- Temp groß -->
+      <div class="flex items-end gap-3">
+        <div>
+          <span class="stat-value text-6xl font-bold text-white leading-none" id="cur-temp">–</span>
+          <span class="text-2xl text-slate-300">°C</span>
+        </div>
+        <div class="mb-1 text-slate-400 text-sm">
+          Gefühlt <span id="cur-feels" class="text-slate-200">–</span>°C
+        </div>
+      </div>
+
+      <!-- Grid 2×3 -->
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="bg-slate-900/60 rounded-lg p-3">
+          <div class="text-slate-500 text-xs mb-1">Luftfeuchte</div>
+          <span class="stat-value text-2xl font-bold text-sky-300" id="cur-humidity">–</span>
+          <span class="text-slate-400 text-sm"> %</span>
+        </div>
+        <div class="bg-slate-900/60 rounded-lg p-3">
+          <div class="text-slate-500 text-xs mb-1">Niederschlag</div>
+          <span class="stat-value text-2xl font-bold text-blue-400" id="cur-precip">–</span>
+          <span class="text-slate-400 text-sm"> mm</span>
+        </div>
+        <div class="bg-slate-900/60 rounded-lg p-3">
+          <div class="text-slate-500 text-xs mb-1">Wind</div>
+          <span class="stat-value text-2xl font-bold text-teal-300" id="cur-wind">–</span>
+          <span class="text-slate-400 text-sm"> km/h</span>
+          <span class="text-slate-500 text-xs ml-1" id="cur-wind-dir"></span>
+        </div>
+        <div class="bg-slate-900/60 rounded-lg p-3">
+          <div class="text-slate-500 text-xs mb-1">Taupunkt</div>
+          <span class="stat-value text-2xl font-bold text-indigo-300" id="cur-dew">–</span>
+          <span class="text-slate-400 text-sm"> °C</span>
+        </div>
+        <div class="bg-slate-900/60 rounded-lg p-3 col-span-2">
+          <div class="text-slate-500 text-xs mb-1">UV-Index</div>
+          <span class="stat-value text-2xl font-bold" id="cur-uv">–</span>
+          <span class="text-xs ml-2" id="cur-uv-label"></span>
+        </div>
+      </div>
+
+      <!-- Rekorde Mini -->
+      <div class="mt-auto border-t border-slate-700 pt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+        <div>🌡️ Rekord heiß: <span class="text-orange-400 font-semibold" id="rec-hot-mini">–</span></div>
+        <div>🥶 Rekord kalt: <span class="text-cyan-400 font-semibold" id="rec-cold-mini">–</span></div>
+        <div>🌧️ Regentag: <span class="text-blue-400 font-semibold" id="rec-rain-mini">–</span></div>
+        <div>💨 Stärkste Böe: <span class="text-teal-300 font-semibold" id="rec-gust-mini">–</span></div>
+      </div>
+    </div>
+
+    <!-- PANEL RECHTS: 4h-Vorhersage Windy -->
+    <div class="card p-4 flex flex-col gap-3">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">4h-Vorhersage</h2>
+        <!-- Overlay-Auswahl -->
+        <div class="flex gap-1">
+          <button class="tab-pill active text-xs px-2 py-1 rounded bg-slate-700 text-slate-200" data-overlay="rain">Regen</button>
+          <button class="tab-pill text-xs px-2 py-1 rounded bg-slate-700 text-slate-200" data-overlay="temp">Temp</button>
+          <button class="tab-pill text-xs px-2 py-1 rounded bg-slate-700 text-slate-200" data-overlay="wind">Wind</button>
+        </div>
+      </div>
+      <iframe id="windy-frame" src="" title="Wettervorhersage Windy"></iframe>
+      <p class="text-slate-600 text-xs text-center">
+        ECMWF-Modell · <a href="https://windy.com" target="_blank" rel="noopener" class="underline hover:text-slate-400">Windy.com</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Zeile 2: 7-Tage-Chart | Jahres-Chart ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="card p-5 chart-wrap">
+      <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-4">Letzte 7 Tage</h2>
+      <canvas id="chart-7d"></canvas>
+    </div>
+    <div class="card p-5 chart-wrap">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">Jahresübersicht</h2>
+        <select id="year-select" class="bg-slate-700 text-slate-200 text-sm rounded px-3 py-1 border border-slate-600 focus:outline-none"></select>
+      </div>
+      <canvas id="chart-year"></canvas>
+    </div>
+  </div>
+
+  <!-- ── Zeile 3: Rekord-Details ── -->
+  <div>
     <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-4">Alle-Zeit-Rekorde</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="card p-4">
         <div class="text-2xl mb-1">🌡️</div>
-        <div class="text-slate-400 text-xs">Heißester Tag</div>
+        <div class="text-slate-400 text-xs">Heißester Moment</div>
         <div class="stat-value text-xl font-bold text-orange-400 mt-1" id="rec-hot">–</div>
         <div class="text-slate-500 text-xs mt-1" id="rec-hot-date">–</div>
       </div>
       <div class="card p-4">
         <div class="text-2xl mb-1">🥶</div>
-        <div class="text-slate-400 text-xs">Kältester Tag</div>
+        <div class="text-slate-400 text-xs">Kältester Moment</div>
         <div class="stat-value text-xl font-bold text-cyan-400 mt-1" id="rec-cold">–</div>
         <div class="text-slate-500 text-xs mt-1" id="rec-cold-date">–</div>
       </div>
@@ -138,90 +226,28 @@
         <div class="text-slate-500 text-xs mt-1" id="rec-gust-date">–</div>
       </div>
     </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="text-center text-slate-600 text-xs pb-4">
-    Wetterdaten: <a href="https://open-meteo.com" class="underline hover:text-slate-400">Open-Meteo</a> (CC BY 4.0) ·
-    Radar: <a href="https://www.rainviewer.com" class="underline hover:text-slate-400">RainViewer</a> ·
-    <span id="footer-updated"></span>
-  </footer>
-
-  <!-- ===================== RADAR MODAL ===================== -->
-  <div id="radar-modal"
-    class="fixed inset-0 z-50 items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-    <div class="card w-full max-w-3xl flex flex-col gap-0 overflow-hidden shadow-2xl">
-
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-700">
-        <div>
-          <h2 class="text-white font-bold text-lg">🌧️ Regenradar</h2>
-          <p class="text-slate-400 text-xs mt-0.5">Suhl-Goldlauter · Thüringen</p>
-        </div>
-        <!-- Tabs: Radar / Vorhersage -->
-        <div class="flex gap-2 mr-4">
-          <button class="radar-tab active text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-700 text-slate-200"
-            data-tab="radar" id="tab-radar">Live-Radar</button>
-          <button class="radar-tab text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-700 text-slate-200"
-            data-tab="forecast" id="tab-forecast">4h-Vorhersage</button>
-        </div>
-        <button id="btn-close-radar" class="text-slate-400 hover:text-white text-xl leading-none">✕</button>
-      </div>
-
-      <!-- Map Panel (RainViewer) -->
-      <div id="panel-radar" class="p-4 flex flex-col gap-3">
-        <div id="radar-map"></div>
-
-        <!-- Zeitstempel -->
-        <div class="flex items-center justify-between text-xs text-slate-400 px-1">
-          <span id="radar-time-label">–</span>
-          <span id="radar-frame-label" class="text-slate-500">–</span>
-        </div>
-
-        <!-- Slider + Controls -->
-        <div class="flex items-center gap-3">
-          <button id="radar-play" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-md w-16 shrink-0">
-            ▶ Play
-          </button>
-          <input id="radar-slider" type="range" min="0" value="0" class="flex-1 h-1.5 rounded" />
-        </div>
-
-        <!-- Legende -->
-        <div class="flex items-center gap-1 text-xs text-slate-500 justify-center flex-wrap">
-          <span>Niederschlag:</span>
-          <span class="inline-block w-4 h-2 rounded" style="background:#00d4ff"></span><span>leicht</span>
-          <span class="inline-block w-4 h-2 rounded ml-1" style="background:#0080ff"></span><span>mäßig</span>
-          <span class="inline-block w-4 h-2 rounded ml-1" style="background:#004cff"></span><span>stark</span>
-          <span class="inline-block w-4 h-2 rounded ml-1" style="background:#8000ff"></span><span>sehr stark</span>
-          <span class="ml-2 text-slate-600">· Nowcast (≈30 min)</span>
-        </div>
-      </div>
-
-      <!-- Forecast Panel (Windy iframe) -->
-      <div id="panel-forecast" class="hidden p-4">
-        <iframe
-          id="windy-iframe"
-          src=""
-          width="100%" height="450"
-          style="border:none; border-radius:0.75rem;"
-          allowfullscreen>
-        </iframe>
-        <p class="text-slate-500 text-xs text-center mt-2">
-          Modell-Vorhersage via <a href="https://windy.com" target="_blank" class="underline">Windy.com</a> · ECMWF
-        </p>
-      </div>
-
-    </div>
   </div>
-  <!-- =================== END RADAR MODAL ================== -->
 
+</main>
+
+<!-- Footer -->
+<footer class="text-center text-slate-600 text-xs py-6 border-t border-slate-800 mt-4">
+  Wetterdaten: <a href="https://open-meteo.com" class="underline hover:text-slate-400">Open-Meteo</a> (CC BY 4.0) ·
+  Radar: <a href="https://www.rainviewer.com" class="underline hover:text-slate-400">RainViewer</a> ·
+  Vorhersage: <a href="https://windy.com" class="underline hover:text-slate-400">Windy.com</a> ·
+  <span id="footer-updated"></span>
+</footer>
+
+<!-- ═══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════ -->
 <script>
-/* ── Snapshot ── */
 const SNAP = '../weather_snapshot.json';
 const LAT = 50.631, LON = 10.724;
 
+/* ── Hilfsfunktionen ── */
 const WIND_DIRS = ['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-function degToDir(deg) { return deg == null ? '–' : WIND_DIRS[Math.round(deg/22.5)%16]; }
+function degToDir(d) { return d == null ? '' : WIND_DIRS[Math.round(d/22.5)%16]; }
 function uvLabel(uv) {
   if (uv == null) return { text:'–', cls:'text-slate-400' };
   if (uv < 3)  return { text:'Niedrig',   cls:'text-green-400' };
@@ -233,17 +259,20 @@ function uvLabel(uv) {
 function fmt(v, d=1) { return v != null ? Number(v).toFixed(d) : '–'; }
 function fmtDate(ts) {
   if (!ts) return '–';
-  return new Date(ts.replace(' ','T')).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return new Date(String(ts).replace(' ','T')).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 
+/* ── Snapshot laden ── */
 let yearChart = null;
 
 async function loadData() {
   let data;
   try {
-    const r = await fetch(SNAP + '?_=' + Date.now());
-    data = await r.json();
-  } catch { document.getElementById('last-updated').textContent = 'Fehler beim Laden'; return; }
+    data = await fetch(SNAP + '?_=' + Date.now()).then(r => r.json());
+  } catch {
+    document.getElementById('last-updated').textContent = 'Fehler beim Laden';
+    return;
+  }
 
   const genAt = data.meta?.generated_at ?? '';
   document.getElementById('last-updated').textContent = 'Stand: ' + genAt;
@@ -258,43 +287,50 @@ async function loadData() {
     document.getElementById('cur-wind').textContent     = fmt(c.wind_speed, 0);
     document.getElementById('cur-wind-dir').textContent = degToDir(c.wind_direction);
     document.getElementById('cur-dew').textContent      = fmt(c.dew_point);
-    const uv = c.uv_index;
-    const ui = uvLabel(uv);
+    const ui = uvLabel(c.uv_index);
     const el = document.getElementById('cur-uv');
-    el.textContent = fmt(uv,1);
-    el.className = 'stat-value text-3xl font-bold ' + ui.cls;
+    el.textContent = fmt(c.uv_index, 1); el.className = 'stat-value text-2xl font-bold ' + ui.cls;
     const ll = document.getElementById('cur-uv-label');
-    ll.textContent = ui.text; ll.className = 'text-xs mt-1 ' + ui.cls;
+    ll.textContent = ui.text; ll.className = 'text-xs ' + ui.cls;
   }
 
+  const rec = data.records ?? {};
+  if (rec.hottest)    { document.getElementById('rec-hot').textContent     = fmt(rec.hottest.temperature)+' °C';    document.getElementById('rec-hot-date').textContent     = fmtDate(rec.hottest.timestamp); document.getElementById('rec-hot-mini').textContent = fmt(rec.hottest.temperature)+' °C'; }
+  if (rec.coldest)    { document.getElementById('rec-cold').textContent    = fmt(rec.coldest.temperature)+' °C';    document.getElementById('rec-cold-date').textContent    = fmtDate(rec.coldest.timestamp); document.getElementById('rec-cold-mini').textContent = fmt(rec.coldest.temperature)+' °C'; }
+  if (rec.wettest_day){ document.getElementById('rec-rain').textContent    = fmt(rec.wettest_day.total)+' mm';      document.getElementById('rec-rain-date').textContent    = fmtDate(rec.wettest_day.day+' 00:00:00'); document.getElementById('rec-rain-mini').textContent = fmt(rec.wettest_day.total)+' mm'; }
+  if (rec.stormiest)  { document.getElementById('rec-gust').textContent    = fmt(rec.stormiest.wind_gust,0)+' km/h'; document.getElementById('rec-gust-date').textContent  = fmtDate(rec.stormiest.timestamp); document.getElementById('rec-gust-mini').textContent = fmt(rec.stormiest.wind_gust,0)+' km/h'; }
+
+  /* 7-Tage-Chart */
   const days7 = data.last_7_days ?? [];
   if (days7.length) {
     const labels = days7.map(r => {
       const d = new Date(r.timestamp.replace(' ','T'));
       return d.toLocaleDateString('de-DE',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
     });
-    const sparse = labels.map((l,i) => i%6===0 ? l : '');
-    const ctx7 = document.getElementById('chart-7d').getContext('2d');
-    new Chart(ctx7, {
-      data: { labels: sparse, datasets: [
-        { type:'line', label:'Temperatur (°C)', data:days7.map(r=>r.temperature),
-          borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)',
-          tension:0.3, pointRadius:0, yAxisID:'yTemp' },
-        { type:'bar',  label:'Niederschlag (mm)', data:days7.map(r=>r.precipitation),
-          backgroundColor:'rgba(59,130,246,0.55)', yAxisID:'yPrecip' },
-      ]},
+    new Chart(document.getElementById('chart-7d').getContext('2d'), {
+      data: {
+        labels: labels.map((l,i) => i%6===0 ? l : ''),
+        datasets: [
+          { type:'line', label:'Temp (°C)', data:days7.map(r=>r.temperature),
+            borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)',
+            tension:0.3, pointRadius:0, yAxisID:'yT' },
+          { type:'bar', label:'Regen (mm)', data:days7.map(r=>r.precipitation),
+            backgroundColor:'rgba(59,130,246,0.55)', yAxisID:'yP' },
+        ],
+      },
       options: {
         responsive:true, interaction:{mode:'index',intersect:false},
         plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
         scales:{
           x:{ticks:{color:'#64748b',maxRotation:0,font:{size:10}},grid:{color:'#1e293b'}},
-          yTemp:{position:'left',ticks:{color:'#f97316',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'°C',color:'#f97316'}},
-          yPrecip:{position:'right',ticks:{color:'#3b82f6',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
+          yT:{position:'left',ticks:{color:'#f97316',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'°C',color:'#f97316'}},
+          yP:{position:'right',ticks:{color:'#3b82f6',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
         },
       },
     });
   }
 
+  /* Jahres-Chart */
   const monthly = data.monthly_stats ?? [];
   if (monthly.length) {
     const years = [...new Set(monthly.map(r=>r.month.slice(0,4)))].sort().reverse();
@@ -303,21 +339,23 @@ async function loadData() {
 
     function renderYear(year) {
       const rows = monthly.filter(r=>r.month.startsWith(year));
-      const labels = rows.map(r => ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][parseInt(r.month.slice(5))-1]);
+      const lbls = rows.map(r=>['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][parseInt(r.month.slice(5))-1]);
       if (yearChart) yearChart.destroy();
       yearChart = new Chart(document.getElementById('chart-year').getContext('2d'), {
-        data: { labels, datasets: [
-          { type:'bar',  label:'Niederschlag (mm)', data:rows.map(r=>r.total_precip), backgroundColor:'rgba(59,130,246,0.5)', yAxisID:'yPrecip' },
-          { type:'line', label:'Ø Temperatur (°C)', data:rows.map(r=>r.avg_temp),
-            borderColor:'#f97316', backgroundColor:'transparent', tension:0.3, pointRadius:4, yAxisID:'yTemp' },
-        ]},
+        data: {
+          labels: lbls,
+          datasets: [
+            { type:'bar',  label:'Regen (mm)', data:rows.map(r=>r.total_precip), backgroundColor:'rgba(59,130,246,0.5)', yAxisID:'yP' },
+            { type:'line', label:'Ø Temp (°C)', data:rows.map(r=>r.avg_temp), borderColor:'#f97316', backgroundColor:'transparent', tension:0.3, pointRadius:4, yAxisID:'yT' },
+          ],
+        },
         options: {
           responsive:true, interaction:{mode:'index',intersect:false},
           plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
           scales:{
             x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'}},
-            yPrecip:{position:'left',ticks:{color:'#3b82f6',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
-            yTemp:{position:'right',ticks:{color:'#f97316',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'°C',color:'#f97316'}},
+            yP:{position:'left',ticks:{color:'#3b82f6',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
+            yT:{position:'right',ticks:{color:'#f97316',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'°C',color:'#f97316'}},
           },
         },
       });
@@ -325,164 +363,107 @@ async function loadData() {
     renderYear(years[0]);
     sel.addEventListener('change', e => renderYear(e.target.value));
   }
-
-  const rec = data.records ?? {};
-  if (rec.hottest)    { document.getElementById('rec-hot').textContent  = fmt(rec.hottest.temperature)+' °C';   document.getElementById('rec-hot-date').textContent  = fmtDate(rec.hottest.timestamp); }
-  if (rec.coldest)    { document.getElementById('rec-cold').textContent = fmt(rec.coldest.temperature)+' °C';   document.getElementById('rec-cold-date').textContent = fmtDate(rec.coldest.timestamp); }
-  if (rec.wettest_day){ document.getElementById('rec-rain').textContent = fmt(rec.wettest_day.total)+' mm';     document.getElementById('rec-rain-date').textContent = fmtDate(rec.wettest_day.day+' 00:00:00'); }
-  if (rec.stormiest)  { document.getElementById('rec-gust').textContent = fmt(rec.stormiest.wind_gust,0)+' km/h'; document.getElementById('rec-gust-date').textContent = fmtDate(rec.stormiest.timestamp); }
 }
 
 loadData();
 
-
-/* ══════════════════════════════════════════════════
-   REGENRADAR — RainViewer + Leaflet
-══════════════════════════════════════════════════ */
-
+/* ═══════════════════════════════════════════════
+   LIVE-RADAR (RainViewer + Leaflet)
+═══════════════════════════════════════════════ */
 let radarMap = null;
-let radarFrames = [];       // [{time, path, layer}]
-let currentFrame = 0;
-let animTimer = null;
-let isPlaying = false;
-let windyLoaded = false;
+let radarFrames = [], currentFrame = 0, animTimer = null, isPlaying = false;
 
-const RAINVIEWER_API = 'https://api.rainviewer.com/public/weather-maps.json';
-
-function tsToLabel(ts) {
-  const d = new Date(ts * 1000);
-  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+function tsLabel(ts) {
+  return new Date(ts*1000).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
 }
 
 function showFrame(idx) {
   if (!radarFrames.length) return;
-  radarFrames.forEach((f, i) => { if (f.layer) f.layer.setOpacity(i === idx ? 0.75 : 0); });
+  radarFrames.forEach((f,i) => f.layer?.setOpacity(i===idx ? 0.75 : 0));
   currentFrame = idx;
   document.getElementById('radar-slider').value = idx;
   const f = radarFrames[idx];
-  const isNowcast = f.kind === 'nowcast';
-  document.getElementById('radar-time-label').textContent = tsToLabel(f.time) + (isNowcast ? ' (Nowcast)' : '');
-  document.getElementById('radar-frame-label').textContent = `Frame ${idx + 1} / ${radarFrames.length}`;
-}
-
-function stepFrame() {
-  showFrame((currentFrame + 1) % radarFrames.length);
+  document.getElementById('radar-time-label').textContent =
+    tsLabel(f.time) + (f.kind==='nowcast' ? ' ▶ Nowcast' : '');
+  document.getElementById('radar-frame-label').textContent = `${idx+1}/${radarFrames.length}`;
 }
 
 function togglePlay() {
   const btn = document.getElementById('radar-play');
   if (isPlaying) {
-    clearInterval(animTimer);
-    isPlaying = false;
-    btn.textContent = '▶ Play';
+    clearInterval(animTimer); isPlaying = false; btn.textContent = '▶ Play';
   } else {
-    isPlaying = true;
-    btn.textContent = '⏸ Pause';
-    animTimer = setInterval(stepFrame, 600);
+    isPlaying = true; btn.textContent = '⏸ Pause';
+    animTimer = setInterval(() => showFrame((currentFrame+1) % radarFrames.length), 650);
   }
 }
 
 async function initRadar() {
-  if (radarMap) { radarMap.invalidateSize(); return; }
-
-  // Karte initialisieren
-  radarMap = L.map('radar-map', { zoomControl: true, attributionControl: true })
-    .setView([LAT, LON], 8);
+  radarMap = L.map('radar-map', { zoomControl:true, attributionControl:true })
+    .setView([LAT, LON], 7);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap · © CARTO',
-    subdomains: 'abcd', maxZoom: 19,
+    attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19,
   }).addTo(radarMap);
 
-  // Standort-Marker
-  L.circleMarker([LAT, LON], {
-    radius: 7, color: '#f97316', fillColor: '#f97316',
-    fillOpacity: 0.9, weight: 2,
-  }).addTo(radarMap).bindPopup('Suhl-Goldlauter');
+  L.circleMarker([LAT, LON], { radius:8, color:'#f97316', fillColor:'#f97316', fillOpacity:0.9, weight:2 })
+    .addTo(radarMap).bindPopup('<b>Suhl-Goldlauter</b>');
 
-  // RainViewer Daten laden
-  document.getElementById('radar-time-label').textContent = 'Lade Radar-Daten…';
+  document.getElementById('radar-time-label').textContent = 'Lade…';
   try {
-    const resp = await fetch(RAINVIEWER_API);
-    const data = await resp.json();
+    const data = await fetch('https://api.rainviewer.com/public/weather-maps.json').then(r=>r.json());
     const host = data.host;
-
-    // Vergangene Frames + Nowcast zusammenfassen
-    const past     = (data.radar?.past     ?? []).map(f => ({ ...f, kind: 'past' }));
-    const nowcast  = (data.radar?.nowcast  ?? []).map(f => ({ ...f, kind: 'nowcast' }));
-    const all = [...past, ...nowcast];
-
-    radarFrames = all.map(f => {
-      const layer = L.tileLayer(
-        host + f.path + '/512/{z}/{x}/{y}/4/1_1.png',
-        { opacity: 0, tileSize: 512, zIndex: 10, attribution: 'RainViewer' }
-      ).addTo(radarMap);
-      return { time: f.time, path: f.path, kind: f.kind, layer };
-    });
-
+    const frames = [
+      ...(data.radar?.past    ?? []).map(f=>({...f,kind:'past'})),
+      ...(data.radar?.nowcast ?? []).map(f=>({...f,kind:'nowcast'})),
+    ];
+    radarFrames = frames.map(f => ({
+      ...f,
+      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/4/1_1.png',
+        { opacity:0, tileSize:512, zIndex:10, attribution:'RainViewer' }).addTo(radarMap),
+    }));
     const slider = document.getElementById('radar-slider');
     slider.max = radarFrames.length - 1;
     slider.addEventListener('input', e => {
       if (isPlaying) togglePlay();
       showFrame(parseInt(e.target.value));
     });
-
-    // Auf letzten vergangenen Frame springen, dann Auto-play
-    const lastPast = past.length > 0 ? past.length - 1 : 0;
+    const lastPast = Math.max(0, (data.radar?.past?.length ?? 1) - 1);
     showFrame(lastPast);
     togglePlay();
-
-  } catch (e) {
-    document.getElementById('radar-time-label').textContent = 'Radar-Daten konnten nicht geladen werden.';
+  } catch {
+    document.getElementById('radar-time-label').textContent = 'Radar nicht verfügbar';
   }
 }
 
-/* ── Modal öffnen / schließen ── */
-function openModal() {
-  document.getElementById('radar-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  // Radar lazy init (nach DOM-Visibility)
-  setTimeout(initRadar, 80);
-}
-
-function closeModal() {
-  if (isPlaying) togglePlay();
-  document.getElementById('radar-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-document.getElementById('btn-radar').addEventListener('click', openModal);
-document.getElementById('btn-close-radar').addEventListener('click', closeModal);
-document.getElementById('radar-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('radar-modal')) closeModal();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 document.getElementById('radar-play').addEventListener('click', togglePlay);
+// Radar starten sobald DOM bereit
+window.addEventListener('load', () => setTimeout(initRadar, 100));
 
-/* ── Tabs: Live-Radar / 4h-Vorhersage ── */
-document.querySelectorAll('.radar-tab').forEach(btn => {
+/* ═══════════════════════════════════════════════
+   WINDY EMBED (4h-Vorhersage)
+═══════════════════════════════════════════════ */
+const WINDY_BASE =
+  'https://embed.windy.com/embed2.html' +
+  '?lat=' + LAT + '&lon=' + LON +
+  '&detailLat=' + LAT + '&detailLon=' + LON +
+  '&zoom=8&level=surface&product=ecmwf' +
+  '&menu=&message=true&marker=true&calendar=now' +
+  '&metricWind=km%2Fh&metricTemp=%C2%B0C&type=map&location=coordinates';
+
+const WINDY_OVERLAYS = { rain: 'rain', temp: 'temp', wind: 'wind' };
+
+function setWindy(overlay) {
+  document.getElementById('windy-frame').src = WINDY_BASE + '&overlay=' + overlay;
+}
+
+setWindy('rain');
+
+document.querySelectorAll('.tab-pill').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.radar-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const tab = btn.dataset.tab;
-
-    document.getElementById('panel-radar').classList.toggle('hidden', tab !== 'radar');
-    document.getElementById('panel-forecast').classList.toggle('hidden', tab !== 'forecast');
-
-    if (tab === 'radar') {
-      setTimeout(() => radarMap?.invalidateSize(), 50);
-    }
-
-    if (tab === 'forecast' && !windyLoaded) {
-      windyLoaded = true;
-      document.getElementById('windy-iframe').src =
-        'https://embed.windy.com/embed2.html' +
-        '?lat=' + LAT + '&lon=' + LON +
-        '&detailLat=' + LAT + '&detailLon=' + LON +
-        '&zoom=8&level=surface&overlay=rain&product=ecmwf' +
-        '&menu=&message=true&marker=true&calendar=now' +
-        '&pressure=&type=map&location=coordinates&metricWind=km%2Fh&metricTemp=%C2%B0C';
-    }
+    setWindy(WINDY_OVERLAYS[btn.dataset.overlay]);
   });
 });
 </script>
