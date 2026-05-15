@@ -44,16 +44,40 @@
   <div class="max-w-screen-xl mx-auto flex items-center justify-between gap-4 flex-wrap">
 
     <!-- Logo + Titel -->
-    <div class="flex items-center gap-3">
-      <img src="logo.png" alt="Cortex AI Solutions" class="h-10 w-auto shrink-0" />
+    <div class="flex items-center gap-3 shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 72" class="h-9 w-auto shrink-0">
+        <defs>
+          <linearGradient id="gwave" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#C9A550"/>
+            <stop offset="100%" stop-color="#E2C070"/>
+          </linearGradient>
+        </defs>
+        <path d="M12,36 C26,12 46,12 60,36 S94,60 108,36" stroke="url(#gwave)" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <circle cx="12"  cy="36" r="5.5" fill="#C9A550"/>
+        <circle cx="60"  cy="36" r="5.5" fill="#C9A550"/>
+        <circle cx="108" cy="36" r="5.5" fill="#E2C070"/>
+        <text x="126" y="30" font-family="Arial,sans-serif" font-size="21" font-weight="bold" fill="#D4AE58">Cortex AI</text>
+        <text x="126" y="54" font-family="Arial,sans-serif" font-size="16" fill="#A8894A">Solutions</text>
+      </svg>
       <div class="border-l border-slate-700 pl-3">
         <div class="text-white font-bold leading-tight text-sm md:text-base">Omni-Weather-Hub</div>
-        <div class="text-slate-400 text-xs leading-tight">Suhl-Goldlauter · 50.631°N 10.724°E · ~550 m</div>
+        <div class="text-slate-400 text-xs leading-tight" id="header-location">Suhl-Goldlauter · 50.631°N 10.724°E</div>
       </div>
     </div>
 
+    <!-- Ort-Suche -->
+    <div class="flex items-center gap-2 flex-1 max-w-xs">
+      <div class="relative flex-1">
+        <input id="city-search" type="text" placeholder="Ort suchen…"
+          class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-1.5 pr-8 focus:outline-none focus:border-amber-500 placeholder-slate-500" />
+        <button onclick="searchCity()" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 text-sm">⌕</button>
+      </div>
+      <button onclick="resetToHome()" id="btn-home" title="Zurück zu Suhl-Goldlauter"
+        class="text-slate-500 hover:text-amber-400 text-lg hidden">⌂</button>
+    </div>
+
     <!-- Status -->
-    <div class="flex items-center gap-2 text-xs text-slate-400">
+    <div class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
       <span class="live-dot w-2 h-2 rounded-full bg-emerald-400 inline-block shrink-0"></span>
       <span id="last-updated">Lade Daten…</span>
     </div>
@@ -100,7 +124,7 @@
     <!-- PANEL MITTE: Aktuell -->
     <div class="card p-5 flex flex-col gap-4">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">Aktuell</h2>
+        <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest" id="current-city-label">Aktuell</h2>
         <button id="btn-refresh"
           onclick="refreshLive()"
           class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all">
@@ -238,7 +262,10 @@
 ══════════════════════════════════════════════════ -->
 <script>
 const SNAP = '../weather_snapshot.json';
-const LAT = 50.631, LON = 10.724;
+const HOME_LAT = 50.631, HOME_LON = 10.724, HOME_NAME = 'Suhl-Goldlauter';
+
+/* aktiver Ort (wird durch Suche / URL-Param überschrieben) */
+let activeLat = HOME_LAT, activeLon = HOME_LON, activeName = HOME_NAME;
 
 /* ── Hilfsfunktionen ── */
 const WIND_DIRS = ['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'];
@@ -360,9 +387,97 @@ async function loadData() {
   }
 }
 
-loadData();
+/* ── Ort-Verwaltung ── */
+async function geocodeCity(name) {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=de&format=json`;
+  const d = await fetch(url).then(r => r.json());
+  if (!d.results?.length) throw new Error(`Ort nicht gefunden: ${name}`);
+  const r = d.results[0];
+  return { lat: r.latitude, lon: r.longitude, name: r.name + (r.admin1 ? `, ${r.admin1}` : '') };
+}
 
-/* ── Live-Aktualisierung via Open-Meteo ── */
+function updateLocationUI(name, lat, lon) {
+  document.getElementById('header-location').textContent = `${name} · ${lat.toFixed(3)}°N ${lon.toFixed(3)}°E`;
+  document.getElementById('current-city-label').textContent = name;
+  const isHome = (lat === HOME_LAT && lon === HOME_LON);
+  document.getElementById('btn-home').classList.toggle('hidden', isHome);
+  if (radarMap && radarMarker) {
+    radarMap.setView([lat, lon], 7);
+    radarMarker.setLatLng([lat, lon]).bindPopup(`<b>${name}</b>`);
+  }
+}
+
+async function switchCity(name, lat, lon) {
+  activeLat = lat; activeLon = lon; activeName = name;
+  updateLocationUI(name, lat, lon);
+  setWindy(activeWindyOverlay);
+  await refreshLive();
+}
+
+async function searchCity() {
+  const input = document.getElementById('city-search');
+  const val = input.value.trim();
+  if (!val) return;
+  const btn  = document.getElementById('btn-refresh');
+  const icon = document.getElementById('btn-refresh-icon');
+  const txt  = document.getElementById('btn-refresh-text');
+  input.disabled = true;
+  try {
+    const geo = await geocodeCity(val);
+    input.value = '';
+    await switchCity(geo.name, geo.lat, geo.lon);
+    /* URL aktualisieren damit der Link teilbar ist */
+    const url = new URL(window.location);
+    url.searchParams.set('city', geo.name);
+    window.history.replaceState({}, '', url);
+  } catch(e) {
+    input.style.borderColor = '#f87171';
+    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+  } finally {
+    input.disabled = false;
+  }
+}
+
+async function resetToHome() {
+  activeLat = HOME_LAT; activeLon = HOME_LON; activeName = HOME_NAME;
+  document.getElementById('city-search').value = '';
+  updateLocationUI(HOME_NAME, HOME_LAT, HOME_LON);
+  setWindy(activeWindyOverlay);
+  const url = new URL(window.location);
+  url.searchParams.delete('city');
+  window.history.replaceState({}, '', url);
+  await refreshLive();
+}
+
+/* Enter-Taste im Suchfeld */
+document.getElementById('city-search').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchCity();
+});
+
+/* URL-Parameter beim Start auswerten */
+async function initFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const city = params.get('city');
+  const lat  = parseFloat(params.get('lat'));
+  const lon  = parseFloat(params.get('lon'));
+  if (city) {
+    try {
+      const geo = await geocodeCity(city);
+      activeLat = geo.lat; activeLon = geo.lon; activeName = geo.name;
+    } catch(e) { /* fallback: Suhl */ }
+  } else if (!isNaN(lat) && !isNaN(lon)) {
+    activeLat = lat; activeLon = lon;
+    activeName = params.get('name') || `${lat.toFixed(2)}N ${lon.toFixed(2)}E`;
+  }
+}
+
+loadData();
+initFromURL().then(() => {
+  updateLocationUI(activeName, activeLat, activeLon);
+  if (activeName !== HOME_NAME) refreshLive();
+});
+
+/* ── Live-Aktualisierung via Open-Meteo + Radar ── */
 async function refreshLive() {
   const btn  = document.getElementById('btn-refresh');
   const icon = document.getElementById('btn-refresh-icon');
@@ -371,15 +486,16 @@ async function refreshLive() {
   icon.style.animation = 'spin 0.8s linear infinite';
   txt.textContent = 'Lädt…';
 
+  /* Wetterwerte */
   try {
     const url = `https://api.open-meteo.com/v1/forecast`
-      + `?latitude=${LAT}&longitude=${LON}`
+      + `?latitude=${activeLat}&longitude=${activeLon}`
       + `&current=temperature_2m,relative_humidity_2m,precipitation,`
       + `wind_speed_10m,wind_direction_10m,apparent_temperature,dew_point_2m,uv_index`
-      + `&timezone=Europe%2FBerlin`;
+      + `&timezone=auto`;
     const d = await fetch(url).then(r => r.json());
     const c = d.current;
-    if (!c) throw new Error('Keine aktuellen Daten');
+    if (!c) throw new Error('Keine Daten');
 
     document.getElementById('cur-temp').textContent     = fmt(c.temperature_2m);
     document.getElementById('cur-feels').textContent    = fmt(c.apparent_temperature);
@@ -388,17 +504,15 @@ async function refreshLive() {
     document.getElementById('cur-wind').textContent     = fmt(c.wind_speed_10m, 0);
     document.getElementById('cur-wind-dir').textContent = degToDir(c.wind_direction_10m);
     document.getElementById('cur-dew').textContent      = fmt(c.dew_point_2m);
-
     const ui = uvLabel(c.uv_index);
     const elUv = document.getElementById('cur-uv');
     elUv.textContent = fmt(c.uv_index, 1);
     elUv.className   = 'stat-value text-2xl font-bold ' + ui.cls;
     const elLbl = document.getElementById('cur-uv-label');
-    elLbl.textContent = ui.text;
-    elLbl.className   = 'text-xs ' + ui.cls;
+    elLbl.textContent = ui.text; elLbl.className = 'text-xs ' + ui.cls;
 
     const now = new Date().toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
-    document.getElementById('last-updated').textContent = `Live: ${now} Uhr · Open-Meteo`;
+    document.getElementById('last-updated').textContent = `Live: ${now} Uhr · ${activeName}`;
     icon.textContent = '✓'; txt.textContent = 'Aktuell';
     setTimeout(() => { icon.textContent = '↻'; txt.textContent = 'Aktualisieren'; }, 3000);
   } catch(e) {
@@ -408,12 +522,48 @@ async function refreshLive() {
     btn.disabled = false;
     icon.style.animation = '';
   }
+
+  /* Radar: Karte neu zentrieren + frische Tiles laden */
+  refreshRadar();
+}
+
+async function refreshRadar() {
+  if (!radarMap) return;
+  radarMap.setView([activeLat, activeLon], 7);
+  if (radarMarker) radarMarker.setLatLng([activeLat, activeLon]);
+
+  /* Alte Tile-Layer entfernen */
+  if (isPlaying) togglePlay();
+  radarFrames.forEach(f => { if (f.layer) radarMap.removeLayer(f.layer); });
+  radarFrames = []; currentFrame = 0;
+
+  document.getElementById('radar-time-label').textContent = 'Aktualisiere…';
+  try {
+    const data = await fetch('https://api.rainviewer.com/public/weather-maps.json').then(r=>r.json());
+    const host = data.host;
+    const frames = [
+      ...(data.radar?.past    ?? []).map(f=>({...f,kind:'past'})),
+      ...(data.radar?.nowcast ?? []).map(f=>({...f,kind:'nowcast'})),
+    ];
+    radarFrames = frames.map(f => ({
+      ...f,
+      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/4/1_1.png',
+        { opacity:0, tileSize:512, zIndex:10, attribution:'RainViewer' }).addTo(radarMap),
+    }));
+    const slider = document.getElementById('radar-slider');
+    slider.max = radarFrames.length - 1;
+    const lastPast = Math.max(0, (data.radar?.past?.length ?? 1) - 1);
+    showFrame(lastPast);
+    togglePlay();
+  } catch {
+    document.getElementById('radar-time-label').textContent = 'Radar nicht verfügbar';
+  }
 }
 
 /* ═══════════════════════════════════════════════
    LIVE-RADAR (RainViewer + Leaflet)
 ═══════════════════════════════════════════════ */
-let radarMap = null;
+let radarMap = null, radarMarker = null;
 let radarFrames = [], currentFrame = 0, animTimer = null, isPlaying = false;
 
 function tsLabel(ts) {
@@ -443,14 +593,14 @@ function togglePlay() {
 
 async function initRadar() {
   radarMap = L.map('radar-map', { zoomControl:true, attributionControl:true })
-    .setView([LAT, LON], 7);
+    .setView([activeLat, activeLon], 7);
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19,
   }).addTo(radarMap);
 
-  L.circleMarker([LAT, LON], { radius:8, color:'#f97316', fillColor:'#f97316', fillOpacity:0.9, weight:2 })
-    .addTo(radarMap).bindPopup('<b>Suhl-Goldlauter</b>');
+  radarMarker = L.circleMarker([activeLat, activeLon], { radius:8, color:'#f97316', fillColor:'#f97316', fillOpacity:0.9, weight:2 })
+    .addTo(radarMap).bindPopup(`<b>${activeName}</b>`);
 
   document.getElementById('radar-time-label').textContent = 'Lade…';
   try {
@@ -486,18 +636,21 @@ window.addEventListener('load', () => setTimeout(initRadar, 100));
 /* ═══════════════════════════════════════════════
    WINDY EMBED (4h-Vorhersage)
 ═══════════════════════════════════════════════ */
-const WINDY_BASE =
-  'https://embed.windy.com/embed2.html' +
-  '?lat=' + LAT + '&lon=' + LON +
-  '&detailLat=' + LAT + '&detailLon=' + LON +
-  '&zoom=8&level=surface&product=ecmwf' +
-  '&menu=&message=true&marker=true&calendar=now' +
-  '&metricWind=km%2Fh&metricTemp=%C2%B0C&type=map&location=coordinates';
+let activeWindyOverlay = 'rain';
 
-const WINDY_OVERLAYS = { rain: 'rain', temp: 'temp', wind: 'wind' };
+function windyURL(overlay) {
+  return 'https://embed.windy.com/embed2.html'
+    + '?lat=' + activeLat + '&lon=' + activeLon
+    + '&detailLat=' + activeLat + '&detailLon=' + activeLon
+    + '&zoom=8&level=surface&product=ecmwf'
+    + '&menu=&message=true&marker=true&calendar=now'
+    + '&metricWind=km%2Fh&metricTemp=%C2%B0C&type=map&location=coordinates'
+    + '&overlay=' + overlay;
+}
 
 function setWindy(overlay) {
-  document.getElementById('windy-frame').src = WINDY_BASE + '&overlay=' + overlay;
+  activeWindyOverlay = overlay;
+  document.getElementById('windy-frame').src = windyURL(overlay);
 }
 
 setWindy('rain');
