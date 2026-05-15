@@ -6,6 +6,8 @@
   <title>Omni-Weather-Hub · Suhl-Goldlauter</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     tailwind.config = { darkMode: 'class' }
   </script>
@@ -16,6 +18,19 @@
     canvas { max-height: 260px; }
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
     .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+    /* Radar Modal */
+    #radar-modal { display: none; }
+    #radar-modal.open { display: flex; }
+    #radar-map { height: 420px; border-radius: 0.75rem; overflow: hidden; }
+    .leaflet-container { background: #0f172a; }
+
+    /* Slider */
+    #radar-slider { accent-color: #3b82f6; }
+
+    /* Tab active */
+    .radar-tab.active { background: #3b82f6; color: #fff; }
+    .radar-tab { transition: background 0.15s; }
   </style>
 </head>
 <body class="text-slate-100 min-h-screen p-4 md:p-8 font-sans">
@@ -28,14 +43,21 @@
       </h1>
       <p class="text-slate-400 text-sm mt-1">Suhl-Goldlauter, Thüringen · 50.631°N, 10.724°E · ~550 m ü.NN</p>
     </div>
-    <div class="flex items-center gap-2 text-xs text-slate-400">
-      <span class="live-dot w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-      <span id="last-updated">Lade Daten…</span>
+    <div class="flex items-center gap-3 flex-wrap">
+      <!-- Radar Button -->
+      <button id="btn-radar"
+        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-lg">
+        🌧️ Regenradar
+      </button>
+      <div class="flex items-center gap-2 text-xs text-slate-400">
+        <span class="live-dot w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+        <span id="last-updated">Lade Daten…</span>
+      </div>
     </div>
   </header>
 
   <!-- Hero Cards -->
-  <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8" id="hero-cards">
+  <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
     <div class="card p-4 col-span-2 md:col-span-1 lg:col-span-2 flex flex-col justify-between">
       <span class="text-slate-400 text-xs uppercase tracking-widest">Temperatur</span>
       <div>
@@ -90,7 +112,7 @@
   <!-- Rekord-Karten -->
   <section class="mb-8">
     <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-4">Alle-Zeit-Rekorde</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="records-grid">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="card p-4">
         <div class="text-2xl mb-1">🌡️</div>
         <div class="text-slate-400 text-xs">Heißester Tag</div>
@@ -120,43 +142,98 @@
 
   <!-- Footer -->
   <footer class="text-center text-slate-600 text-xs pb-4">
-    Daten: <a href="https://open-meteo.com" class="underline hover:text-slate-400">Open-Meteo</a> (Open Data, CC BY 4.0) ·
-    Lokale Sensorik: Ecowitt/Froggit ·
+    Wetterdaten: <a href="https://open-meteo.com" class="underline hover:text-slate-400">Open-Meteo</a> (CC BY 4.0) ·
+    Radar: <a href="https://www.rainviewer.com" class="underline hover:text-slate-400">RainViewer</a> ·
     <span id="footer-updated"></span>
   </footer>
 
+  <!-- ===================== RADAR MODAL ===================== -->
+  <div id="radar-modal"
+    class="fixed inset-0 z-50 items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="card w-full max-w-3xl flex flex-col gap-0 overflow-hidden shadow-2xl">
+
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-700">
+        <div>
+          <h2 class="text-white font-bold text-lg">🌧️ Regenradar</h2>
+          <p class="text-slate-400 text-xs mt-0.5">Suhl-Goldlauter · Thüringen</p>
+        </div>
+        <!-- Tabs: Radar / Vorhersage -->
+        <div class="flex gap-2 mr-4">
+          <button class="radar-tab active text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-700 text-slate-200"
+            data-tab="radar" id="tab-radar">Live-Radar</button>
+          <button class="radar-tab text-xs font-semibold px-3 py-1.5 rounded-md bg-slate-700 text-slate-200"
+            data-tab="forecast" id="tab-forecast">4h-Vorhersage</button>
+        </div>
+        <button id="btn-close-radar" class="text-slate-400 hover:text-white text-xl leading-none">✕</button>
+      </div>
+
+      <!-- Map Panel (RainViewer) -->
+      <div id="panel-radar" class="p-4 flex flex-col gap-3">
+        <div id="radar-map"></div>
+
+        <!-- Zeitstempel -->
+        <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+          <span id="radar-time-label">–</span>
+          <span id="radar-frame-label" class="text-slate-500">–</span>
+        </div>
+
+        <!-- Slider + Controls -->
+        <div class="flex items-center gap-3">
+          <button id="radar-play" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-md w-16 shrink-0">
+            ▶ Play
+          </button>
+          <input id="radar-slider" type="range" min="0" value="0" class="flex-1 h-1.5 rounded" />
+        </div>
+
+        <!-- Legende -->
+        <div class="flex items-center gap-1 text-xs text-slate-500 justify-center flex-wrap">
+          <span>Niederschlag:</span>
+          <span class="inline-block w-4 h-2 rounded" style="background:#00d4ff"></span><span>leicht</span>
+          <span class="inline-block w-4 h-2 rounded ml-1" style="background:#0080ff"></span><span>mäßig</span>
+          <span class="inline-block w-4 h-2 rounded ml-1" style="background:#004cff"></span><span>stark</span>
+          <span class="inline-block w-4 h-2 rounded ml-1" style="background:#8000ff"></span><span>sehr stark</span>
+          <span class="ml-2 text-slate-600">· Nowcast (≈30 min)</span>
+        </div>
+      </div>
+
+      <!-- Forecast Panel (Windy iframe) -->
+      <div id="panel-forecast" class="hidden p-4">
+        <iframe
+          id="windy-iframe"
+          src=""
+          width="100%" height="450"
+          style="border:none; border-radius:0.75rem;"
+          allowfullscreen>
+        </iframe>
+        <p class="text-slate-500 text-xs text-center mt-2">
+          Modell-Vorhersage via <a href="https://windy.com" target="_blank" class="underline">Windy.com</a> · ECMWF
+        </p>
+      </div>
+
+    </div>
+  </div>
+  <!-- =================== END RADAR MODAL ================== -->
+
 <script>
+/* ── Snapshot ── */
 const SNAP = '../weather_snapshot.json';
+const LAT = 50.631, LON = 10.724;
 
 const WIND_DIRS = ['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-function degToDir(deg) {
-  if (deg == null) return '–';
-  return WIND_DIRS[Math.round(deg / 22.5) % 16];
-}
-
+function degToDir(deg) { return deg == null ? '–' : WIND_DIRS[Math.round(deg/22.5)%16]; }
 function uvLabel(uv) {
-  if (uv == null) return { text: '–', cls: 'text-slate-400' };
-  if (uv < 3)  return { text: 'Niedrig',   cls: 'text-green-400' };
-  if (uv < 6)  return { text: 'Mittel',    cls: 'text-yellow-400' };
-  if (uv < 8)  return { text: 'Hoch',      cls: 'text-orange-400' };
-  if (uv < 11) return { text: 'Sehr hoch', cls: 'text-red-400' };
-  return { text: 'Extrem', cls: 'text-purple-400' };
+  if (uv == null) return { text:'–', cls:'text-slate-400' };
+  if (uv < 3)  return { text:'Niedrig',   cls:'text-green-400' };
+  if (uv < 6)  return { text:'Mittel',    cls:'text-yellow-400' };
+  if (uv < 8)  return { text:'Hoch',      cls:'text-orange-400' };
+  if (uv < 11) return { text:'Sehr hoch', cls:'text-red-400' };
+  return { text:'Extrem', cls:'text-purple-400' };
 }
-
-function fmt(v, digits = 1) {
-  return v != null ? Number(v).toFixed(digits) : '–';
-}
-
+function fmt(v, d=1) { return v != null ? Number(v).toFixed(d) : '–'; }
 function fmtDate(ts) {
   if (!ts) return '–';
-  const d = new Date(ts.replace(' ', 'T'));
-  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-function fmtTs(ts) {
-  if (!ts) return '–';
-  const d = new Date(ts.replace(' ', 'T'));
-  return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(ts.replace(' ','T')).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 
 let yearChart = null;
@@ -164,190 +241,250 @@ let yearChart = null;
 async function loadData() {
   let data;
   try {
-    const resp = await fetch(SNAP + '?_=' + Date.now());
-    data = await resp.json();
-  } catch (e) {
-    document.getElementById('last-updated').textContent = 'Fehler beim Laden';
-    return;
-  }
+    const r = await fetch(SNAP + '?_=' + Date.now());
+    data = await r.json();
+  } catch { document.getElementById('last-updated').textContent = 'Fehler beim Laden'; return; }
 
-  // Meta
   const genAt = data.meta?.generated_at ?? '';
   document.getElementById('last-updated').textContent = 'Stand: ' + genAt;
   document.getElementById('footer-updated').textContent = 'Aktualisiert: ' + genAt;
 
-  // Current
   const c = data.current;
   if (c) {
-    document.getElementById('cur-temp').textContent    = fmt(c.temperature);
-    document.getElementById('cur-feels').textContent   = fmt(c.apparent_temperature);
+    document.getElementById('cur-temp').textContent     = fmt(c.temperature);
+    document.getElementById('cur-feels').textContent    = fmt(c.apparent_temperature);
     document.getElementById('cur-humidity').textContent = c.humidity ?? '–';
-    document.getElementById('cur-precip').textContent  = fmt(c.precipitation);
-    document.getElementById('cur-wind').textContent    = fmt(c.wind_speed, 0);
+    document.getElementById('cur-precip').textContent   = fmt(c.precipitation);
+    document.getElementById('cur-wind').textContent     = fmt(c.wind_speed, 0);
     document.getElementById('cur-wind-dir').textContent = degToDir(c.wind_direction);
-    document.getElementById('cur-dew').textContent     = fmt(c.dew_point);
-
+    document.getElementById('cur-dew').textContent      = fmt(c.dew_point);
     const uv = c.uv_index;
-    const uvInfo = uvLabel(uv);
-    const uvEl = document.getElementById('cur-uv');
-    uvEl.textContent = fmt(uv, 1);
-    uvEl.className = 'stat-value text-3xl font-bold ' + uvInfo.cls;
-    const uvLbl = document.getElementById('cur-uv-label');
-    uvLbl.textContent = uvInfo.text;
-    uvLbl.className = 'text-xs mt-1 ' + uvInfo.cls;
+    const ui = uvLabel(uv);
+    const el = document.getElementById('cur-uv');
+    el.textContent = fmt(uv,1);
+    el.className = 'stat-value text-3xl font-bold ' + ui.cls;
+    const ll = document.getElementById('cur-uv-label');
+    ll.textContent = ui.text; ll.className = 'text-xs mt-1 ' + ui.cls;
   }
 
-  // 7-Tage Chart
   const days7 = data.last_7_days ?? [];
   if (days7.length) {
     const labels = days7.map(r => {
-      const d = new Date(r.timestamp.replace(' ', 'T'));
-      return d.toLocaleDateString('de-DE', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+      const d = new Date(r.timestamp.replace(' ','T'));
+      return d.toLocaleDateString('de-DE',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
     });
-    // Thin out labels for readability (every 6h)
-    const sparse = labels.map((l, i) => i % 6 === 0 ? l : '');
-
+    const sparse = labels.map((l,i) => i%6===0 ? l : '');
     const ctx7 = document.getElementById('chart-7d').getContext('2d');
     new Chart(ctx7, {
-      data: {
-        labels: sparse,
-        datasets: [
-          {
-            type: 'line',
-            label: 'Temperatur (°C)',
-            data: days7.map(r => r.temperature),
-            borderColor: '#f97316',
-            backgroundColor: 'rgba(249,115,22,0.08)',
-            tension: 0.3,
-            pointRadius: 0,
-            yAxisID: 'yTemp',
-          },
-          {
-            type: 'bar',
-            label: 'Niederschlag (mm)',
-            data: days7.map(r => r.precipitation),
-            backgroundColor: 'rgba(59,130,246,0.55)',
-            yAxisID: 'yPrecip',
-          },
-        ],
-      },
+      data: { labels: sparse, datasets: [
+        { type:'line', label:'Temperatur (°C)', data:days7.map(r=>r.temperature),
+          borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.08)',
+          tension:0.3, pointRadius:0, yAxisID:'yTemp' },
+        { type:'bar',  label:'Niederschlag (mm)', data:days7.map(r=>r.precipitation),
+          backgroundColor:'rgba(59,130,246,0.55)', yAxisID:'yPrecip' },
+      ]},
       options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
-        scales: {
-          x: { ticks: { color: '#64748b', maxRotation: 0, font: { size: 10 } }, grid: { color: '#1e293b' } },
-          yTemp: {
-            position: 'left',
-            ticks: { color: '#f97316', font: { size: 11 } },
-            grid: { color: '#334155' },
-            title: { display: true, text: '°C', color: '#f97316' },
-          },
-          yPrecip: {
-            position: 'right',
-            ticks: { color: '#3b82f6', font: { size: 11 } },
-            grid: { drawOnChartArea: false },
-            title: { display: true, text: 'mm', color: '#3b82f6' },
-            min: 0,
-          },
+        responsive:true, interaction:{mode:'index',intersect:false},
+        plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+        scales:{
+          x:{ticks:{color:'#64748b',maxRotation:0,font:{size:10}},grid:{color:'#1e293b'}},
+          yTemp:{position:'left',ticks:{color:'#f97316',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'°C',color:'#f97316'}},
+          yPrecip:{position:'right',ticks:{color:'#3b82f6',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
         },
       },
     });
   }
 
-  // Jahres-Chart
   const monthly = data.monthly_stats ?? [];
   if (monthly.length) {
-    const years = [...new Set(monthly.map(r => r.month.slice(0, 4)))].sort().reverse();
+    const years = [...new Set(monthly.map(r=>r.month.slice(0,4)))].sort().reverse();
     const sel = document.getElementById('year-select');
-    years.forEach(y => {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y;
-      sel.appendChild(opt);
-    });
+    years.forEach(y => { const o=document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o); });
 
     function renderYear(year) {
-      const rows = monthly.filter(r => r.month.startsWith(year));
-      const labels = rows.map(r => {
-        const m = parseInt(r.month.slice(5));
-        return ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][m - 1];
-      });
-
+      const rows = monthly.filter(r=>r.month.startsWith(year));
+      const labels = rows.map(r => ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][parseInt(r.month.slice(5))-1]);
       if (yearChart) yearChart.destroy();
-      const ctx = document.getElementById('chart-year').getContext('2d');
-      yearChart = new Chart(ctx, {
-        data: {
-          labels,
-          datasets: [
-            {
-              type: 'bar',
-              label: 'Niederschlag (mm)',
-              data: rows.map(r => r.total_precip),
-              backgroundColor: 'rgba(59,130,246,0.5)',
-              yAxisID: 'yPrecip',
-            },
-            {
-              type: 'line',
-              label: 'Ø Temperatur (°C)',
-              data: rows.map(r => r.avg_temp),
-              borderColor: '#f97316',
-              backgroundColor: 'transparent',
-              tension: 0.3,
-              pointRadius: 4,
-              yAxisID: 'yTemp',
-            },
-          ],
-        },
+      yearChart = new Chart(document.getElementById('chart-year').getContext('2d'), {
+        data: { labels, datasets: [
+          { type:'bar',  label:'Niederschlag (mm)', data:rows.map(r=>r.total_precip), backgroundColor:'rgba(59,130,246,0.5)', yAxisID:'yPrecip' },
+          { type:'line', label:'Ø Temperatur (°C)', data:rows.map(r=>r.avg_temp),
+            borderColor:'#f97316', backgroundColor:'transparent', tension:0.3, pointRadius:4, yAxisID:'yTemp' },
+        ]},
         options: {
-          responsive: true,
-          interaction: { mode: 'index', intersect: false },
-          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
-          scales: {
-            x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#334155' } },
-            yPrecip: {
-              position: 'left',
-              ticks: { color: '#3b82f6', font: { size: 11 } },
-              grid: { color: '#334155' },
-              title: { display: true, text: 'mm', color: '#3b82f6' },
-              min: 0,
-            },
-            yTemp: {
-              position: 'right',
-              ticks: { color: '#f97316', font: { size: 11 } },
-              grid: { drawOnChartArea: false },
-              title: { display: true, text: '°C', color: '#f97316' },
-            },
+          responsive:true, interaction:{mode:'index',intersect:false},
+          plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+          scales:{
+            x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'}},
+            yPrecip:{position:'left',ticks:{color:'#3b82f6',font:{size:11}},grid:{color:'#334155'},title:{display:true,text:'mm',color:'#3b82f6'},min:0},
+            yTemp:{position:'right',ticks:{color:'#f97316',font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'°C',color:'#f97316'}},
           },
         },
       });
     }
-
     renderYear(years[0]);
     sel.addEventListener('change', e => renderYear(e.target.value));
   }
 
-  // Rekorde
   const rec = data.records ?? {};
-  if (rec.hottest) {
-    document.getElementById('rec-hot').textContent = fmt(rec.hottest.temperature) + ' °C';
-    document.getElementById('rec-hot-date').textContent = fmtDate(rec.hottest.timestamp);
-  }
-  if (rec.coldest) {
-    document.getElementById('rec-cold').textContent = fmt(rec.coldest.temperature) + ' °C';
-    document.getElementById('rec-cold-date').textContent = fmtDate(rec.coldest.timestamp);
-  }
-  if (rec.wettest_day) {
-    document.getElementById('rec-rain').textContent = fmt(rec.wettest_day.total) + ' mm';
-    document.getElementById('rec-rain-date').textContent = fmtDate(rec.wettest_day.day + ' 00:00:00');
-  }
-  if (rec.stormiest) {
-    document.getElementById('rec-gust').textContent = fmt(rec.stormiest.wind_gust, 0) + ' km/h';
-    document.getElementById('rec-gust-date').textContent = fmtDate(rec.stormiest.timestamp);
-  }
+  if (rec.hottest)    { document.getElementById('rec-hot').textContent  = fmt(rec.hottest.temperature)+' °C';   document.getElementById('rec-hot-date').textContent  = fmtDate(rec.hottest.timestamp); }
+  if (rec.coldest)    { document.getElementById('rec-cold').textContent = fmt(rec.coldest.temperature)+' °C';   document.getElementById('rec-cold-date').textContent = fmtDate(rec.coldest.timestamp); }
+  if (rec.wettest_day){ document.getElementById('rec-rain').textContent = fmt(rec.wettest_day.total)+' mm';     document.getElementById('rec-rain-date').textContent = fmtDate(rec.wettest_day.day+' 00:00:00'); }
+  if (rec.stormiest)  { document.getElementById('rec-gust').textContent = fmt(rec.stormiest.wind_gust,0)+' km/h'; document.getElementById('rec-gust-date').textContent = fmtDate(rec.stormiest.timestamp); }
 }
 
 loadData();
+
+
+/* ══════════════════════════════════════════════════
+   REGENRADAR — RainViewer + Leaflet
+══════════════════════════════════════════════════ */
+
+let radarMap = null;
+let radarFrames = [];       // [{time, path, layer}]
+let currentFrame = 0;
+let animTimer = null;
+let isPlaying = false;
+let windyLoaded = false;
+
+const RAINVIEWER_API = 'https://api.rainviewer.com/public/weather-maps.json';
+
+function tsToLabel(ts) {
+  const d = new Date(ts * 1000);
+  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+}
+
+function showFrame(idx) {
+  if (!radarFrames.length) return;
+  radarFrames.forEach((f, i) => { if (f.layer) f.layer.setOpacity(i === idx ? 0.75 : 0); });
+  currentFrame = idx;
+  document.getElementById('radar-slider').value = idx;
+  const f = radarFrames[idx];
+  const isNowcast = f.kind === 'nowcast';
+  document.getElementById('radar-time-label').textContent = tsToLabel(f.time) + (isNowcast ? ' (Nowcast)' : '');
+  document.getElementById('radar-frame-label').textContent = `Frame ${idx + 1} / ${radarFrames.length}`;
+}
+
+function stepFrame() {
+  showFrame((currentFrame + 1) % radarFrames.length);
+}
+
+function togglePlay() {
+  const btn = document.getElementById('radar-play');
+  if (isPlaying) {
+    clearInterval(animTimer);
+    isPlaying = false;
+    btn.textContent = '▶ Play';
+  } else {
+    isPlaying = true;
+    btn.textContent = '⏸ Pause';
+    animTimer = setInterval(stepFrame, 600);
+  }
+}
+
+async function initRadar() {
+  if (radarMap) { radarMap.invalidateSize(); return; }
+
+  // Karte initialisieren
+  radarMap = L.map('radar-map', { zoomControl: true, attributionControl: true })
+    .setView([LAT, LON], 8);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap · © CARTO',
+    subdomains: 'abcd', maxZoom: 19,
+  }).addTo(radarMap);
+
+  // Standort-Marker
+  L.circleMarker([LAT, LON], {
+    radius: 7, color: '#f97316', fillColor: '#f97316',
+    fillOpacity: 0.9, weight: 2,
+  }).addTo(radarMap).bindPopup('Suhl-Goldlauter');
+
+  // RainViewer Daten laden
+  document.getElementById('radar-time-label').textContent = 'Lade Radar-Daten…';
+  try {
+    const resp = await fetch(RAINVIEWER_API);
+    const data = await resp.json();
+    const host = data.host;
+
+    // Vergangene Frames + Nowcast zusammenfassen
+    const past     = (data.radar?.past     ?? []).map(f => ({ ...f, kind: 'past' }));
+    const nowcast  = (data.radar?.nowcast  ?? []).map(f => ({ ...f, kind: 'nowcast' }));
+    const all = [...past, ...nowcast];
+
+    radarFrames = all.map(f => {
+      const layer = L.tileLayer(
+        host + f.path + '/512/{z}/{x}/{y}/4/1_1.png',
+        { opacity: 0, tileSize: 512, zIndex: 10, attribution: 'RainViewer' }
+      ).addTo(radarMap);
+      return { time: f.time, path: f.path, kind: f.kind, layer };
+    });
+
+    const slider = document.getElementById('radar-slider');
+    slider.max = radarFrames.length - 1;
+    slider.addEventListener('input', e => {
+      if (isPlaying) togglePlay();
+      showFrame(parseInt(e.target.value));
+    });
+
+    // Auf letzten vergangenen Frame springen, dann Auto-play
+    const lastPast = past.length > 0 ? past.length - 1 : 0;
+    showFrame(lastPast);
+    togglePlay();
+
+  } catch (e) {
+    document.getElementById('radar-time-label').textContent = 'Radar-Daten konnten nicht geladen werden.';
+  }
+}
+
+/* ── Modal öffnen / schließen ── */
+function openModal() {
+  document.getElementById('radar-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // Radar lazy init (nach DOM-Visibility)
+  setTimeout(initRadar, 80);
+}
+
+function closeModal() {
+  if (isPlaying) togglePlay();
+  document.getElementById('radar-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('btn-radar').addEventListener('click', openModal);
+document.getElementById('btn-close-radar').addEventListener('click', closeModal);
+document.getElementById('radar-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('radar-modal')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.getElementById('radar-play').addEventListener('click', togglePlay);
+
+/* ── Tabs: Live-Radar / 4h-Vorhersage ── */
+document.querySelectorAll('.radar-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.radar-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+
+    document.getElementById('panel-radar').classList.toggle('hidden', tab !== 'radar');
+    document.getElementById('panel-forecast').classList.toggle('hidden', tab !== 'forecast');
+
+    if (tab === 'radar') {
+      setTimeout(() => radarMap?.invalidateSize(), 50);
+    }
+
+    if (tab === 'forecast' && !windyLoaded) {
+      windyLoaded = true;
+      document.getElementById('windy-iframe').src =
+        'https://embed.windy.com/embed2.html' +
+        '?lat=' + LAT + '&lon=' + LON +
+        '&detailLat=' + LAT + '&detailLon=' + LON +
+        '&zoom=8&level=surface&overlay=rain&product=ecmwf' +
+        '&menu=&message=true&marker=true&calendar=now' +
+        '&pressure=&type=map&location=coordinates&metricWind=km%2Fh&metricTemp=%C2%B0C';
+    }
+  });
+});
 </script>
 </body>
 </html>
