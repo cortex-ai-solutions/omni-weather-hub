@@ -15,6 +15,7 @@
     .stat-value { font-variant-numeric: tabular-nums; }
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
     .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Radar map */
     #radar-map { height: 360px; border-radius: 0.75rem; overflow: hidden; }
@@ -44,21 +45,7 @@
 
     <!-- Logo + Titel -->
     <div class="flex items-center gap-3">
-      <!-- Cortex AI Logo SVG (dark-mode angepasst) -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" class="h-9 w-auto shrink-0">
-        <defs>
-          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#50E3C2;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <path d="M30,50 Q50,20 70,50 T110,50" stroke="url(#grad)" stroke-width="8" fill="none"/>
-        <circle cx="30" cy="50" r="5" fill="#4A90E2"/>
-        <circle cx="70" cy="50" r="5" fill="#4A90E2"/>
-        <circle cx="110" cy="50" r="5" fill="#50E3C2"/>
-        <text x="130" y="46" font-family="Arial,sans-serif" font-size="24" font-weight="bold" fill="#f1f5f9">Cortex AI</text>
-        <text x="130" y="70" font-family="Arial,sans-serif" font-size="18" fill="#94a3b8">Solutions</text>
-      </svg>
+      <img src="logo.png" alt="Cortex AI Solutions" class="h-10 w-auto shrink-0" />
       <div class="border-l border-slate-700 pl-3">
         <div class="text-white font-bold leading-tight text-sm md:text-base">Omni-Weather-Hub</div>
         <div class="text-slate-400 text-xs leading-tight">Suhl-Goldlauter · 50.631°N 10.724°E · ~550 m</div>
@@ -112,7 +99,15 @@
 
     <!-- PANEL MITTE: Aktuell -->
     <div class="card p-5 flex flex-col gap-4">
-      <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">Aktuell</h2>
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">Aktuell</h2>
+        <button id="btn-refresh"
+          onclick="refreshLive()"
+          class="flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 active:scale-95 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all">
+          <span id="btn-refresh-icon">↻</span>
+          <span id="btn-refresh-text">Aktualisieren</span>
+        </button>
+      </div>
 
       <!-- Temp groß -->
       <div class="flex items-end gap-3">
@@ -366,6 +361,54 @@ async function loadData() {
 }
 
 loadData();
+
+/* ── Live-Aktualisierung via Open-Meteo ── */
+async function refreshLive() {
+  const btn  = document.getElementById('btn-refresh');
+  const icon = document.getElementById('btn-refresh-icon');
+  const txt  = document.getElementById('btn-refresh-text');
+  btn.disabled = true;
+  icon.style.animation = 'spin 0.8s linear infinite';
+  txt.textContent = 'Lädt…';
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast`
+      + `?latitude=${LAT}&longitude=${LON}`
+      + `&current=temperature_2m,relative_humidity_2m,precipitation,`
+      + `wind_speed_10m,wind_direction_10m,apparent_temperature,dew_point_2m,uv_index`
+      + `&timezone=Europe%2FBerlin`;
+    const d = await fetch(url).then(r => r.json());
+    const c = d.current;
+    if (!c) throw new Error('Keine aktuellen Daten');
+
+    document.getElementById('cur-temp').textContent     = fmt(c.temperature_2m);
+    document.getElementById('cur-feels').textContent    = fmt(c.apparent_temperature);
+    document.getElementById('cur-humidity').textContent = c.relative_humidity_2m ?? '–';
+    document.getElementById('cur-precip').textContent   = fmt(c.precipitation);
+    document.getElementById('cur-wind').textContent     = fmt(c.wind_speed_10m, 0);
+    document.getElementById('cur-wind-dir').textContent = degToDir(c.wind_direction_10m);
+    document.getElementById('cur-dew').textContent      = fmt(c.dew_point_2m);
+
+    const ui = uvLabel(c.uv_index);
+    const elUv = document.getElementById('cur-uv');
+    elUv.textContent = fmt(c.uv_index, 1);
+    elUv.className   = 'stat-value text-2xl font-bold ' + ui.cls;
+    const elLbl = document.getElementById('cur-uv-label');
+    elLbl.textContent = ui.text;
+    elLbl.className   = 'text-xs ' + ui.cls;
+
+    const now = new Date().toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('last-updated').textContent = `Live: ${now} Uhr · Open-Meteo`;
+    icon.textContent = '✓'; txt.textContent = 'Aktuell';
+    setTimeout(() => { icon.textContent = '↻'; txt.textContent = 'Aktualisieren'; }, 3000);
+  } catch(e) {
+    icon.textContent = '✗'; txt.textContent = 'Fehler';
+    setTimeout(() => { icon.textContent = '↻'; txt.textContent = 'Aktualisieren'; }, 3000);
+  } finally {
+    btn.disabled = false;
+    icon.style.animation = '';
+  }
+}
 
 /* ═══════════════════════════════════════════════
    LIVE-RADAR (RainViewer + Leaflet)
