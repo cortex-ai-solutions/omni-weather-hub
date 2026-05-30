@@ -836,6 +836,15 @@ async function refreshRadar() {
   radarMap.setView([activeLat, activeLon], 7);
   if (radarMarker) radarMarker.setLatLng([activeLat, activeLon]);
 
+  /* Basemap-Stil tauschen falls Tag/Nacht gewechselt hat */
+  const newUrl = getBaseTileUrl();
+  if (baseTileLayer && baseTileLayer._url !== newUrl) {
+    radarMap.removeLayer(baseTileLayer);
+    baseTileLayer = L.tileLayer(newUrl, {
+      attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19,
+    }).addTo(radarMap);
+  }
+
   /* Alte Tile-Layer entfernen */
   if (isPlaying) togglePlay();
   radarFrames.forEach(f => { if (f.layer) radarMap.removeLayer(f.layer); });
@@ -867,8 +876,15 @@ async function refreshRadar() {
 /* ═══════════════════════════════════════════════
    LIVE-RADAR (RainViewer + Leaflet)
 ═══════════════════════════════════════════════ */
-let radarMap = null, radarMarker = null;
+let radarMap = null, radarMarker = null, baseTileLayer = null;
 let radarFrames = [], currentFrame = 0, animTimer = null, isPlaying = false;
+
+function getBaseTileUrl() {
+  const h = new Date().getHours();
+  return (h >= 20 || h < 7)
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+}
 
 function tsLabel(ts) {
   return new Date(ts*1000).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
@@ -899,7 +915,7 @@ async function initRadar() {
   radarMap = L.map('radar-map', { zoomControl:true, attributionControl:true })
     .setView([activeLat, activeLon], 7);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  baseTileLayer = L.tileLayer(getBaseTileUrl(), {
     attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19,
   }).addTo(radarMap);
 
