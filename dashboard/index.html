@@ -19,7 +19,7 @@
 
     /* Radar map */
     #radar-map { height: 360px; border-radius: 0.75rem; overflow: hidden; }
-    .leaflet-container { background: #1e293b; }
+    .leaflet-container { background: #f1f5f9; }
 
     /* Windy iframe */
     #windy-frame { border: none; border-radius: 0.75rem; width: 100%; height: 360px; display: block; }
@@ -174,12 +174,12 @@
         </div>
       </div>
 
-      <!-- Rekorde Mini -->
+      <!-- Historischer Mini (Dieser Tag) -->
       <div class="mt-auto border-t border-slate-700 pt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
-        <div>🌡️ Rekord heiß: <span class="text-orange-400 font-semibold" id="rec-hot-mini">–</span></div>
-        <div>🥶 Rekord kalt: <span class="text-cyan-400 font-semibold" id="rec-cold-mini">–</span></div>
-        <div>🌧️ Regentag: <span class="text-blue-400 font-semibold" id="rec-rain-mini">–</span></div>
-        <div>💨 Stärkste Böe: <span class="text-teal-300 font-semibold" id="rec-gust-mini">–</span></div>
+        <div>🌡️ Wärmster: <span class="text-orange-400 font-semibold" id="rec-hot-mini">–</span></div>
+        <div>🥶 Kältester: <span class="text-cyan-400 font-semibold" id="rec-cold-mini">–</span></div>
+        <div>🌧️ Regenreichster: <span class="text-blue-400 font-semibold" id="rec-rain-mini">–</span></div>
+        <div>☀️ Sonnigster: <span class="text-yellow-400 font-semibold" id="rec-gust-mini">–</span></div>
       </div>
     </div>
 
@@ -269,33 +269,50 @@
     </div>
   </div>
 
-  <!-- ── Zeile 4: Rekord-Details ── -->
+  <!-- ── Zeile 4: Dieser Tag in der Geschichte ── -->
   <div>
-    <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-4">Alle-Zeit-Rekorde</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="flex items-baseline gap-3 mb-4 flex-wrap">
+      <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">📅 Dieser Tag in der Geschichte</h2>
+      <span class="text-slate-500 text-xs" id="hist-date-label">–</span>
+    </div>
+
+    <!-- Rekord-Karten -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
       <div class="card p-4">
         <div class="text-2xl mb-1">🌡️</div>
-        <div class="text-slate-400 text-xs">Heißester Moment</div>
-        <div class="stat-value text-xl font-bold text-orange-400 mt-1" id="rec-hot">–</div>
-        <div class="text-slate-500 text-xs mt-1" id="rec-hot-date">–</div>
+        <div class="text-slate-400 text-xs">Wärmster Tag</div>
+        <div class="stat-value text-xl font-bold text-orange-400 mt-1" id="hist-hot">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="hist-hot-year">–</div>
       </div>
       <div class="card p-4">
         <div class="text-2xl mb-1">🥶</div>
-        <div class="text-slate-400 text-xs">Kältester Moment</div>
-        <div class="stat-value text-xl font-bold text-cyan-400 mt-1" id="rec-cold">–</div>
-        <div class="text-slate-500 text-xs mt-1" id="rec-cold-date">–</div>
+        <div class="text-slate-400 text-xs">Kältester Tag</div>
+        <div class="stat-value text-xl font-bold text-cyan-400 mt-1" id="hist-cold">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="hist-cold-year">–</div>
       </div>
       <div class="card p-4">
         <div class="text-2xl mb-1">🌧️</div>
         <div class="text-slate-400 text-xs">Regenreichster Tag</div>
-        <div class="stat-value text-xl font-bold text-blue-400 mt-1" id="rec-rain">–</div>
-        <div class="text-slate-500 text-xs mt-1" id="rec-rain-date">–</div>
+        <div class="stat-value text-xl font-bold text-blue-400 mt-1" id="hist-rain">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="hist-rain-year">–</div>
       </div>
       <div class="card p-4">
-        <div class="text-2xl mb-1">💨</div>
-        <div class="text-slate-400 text-xs">Stärkste Böe</div>
-        <div class="stat-value text-xl font-bold text-teal-300 mt-1" id="rec-gust">–</div>
-        <div class="text-slate-500 text-xs mt-1" id="rec-gust-date">–</div>
+        <div class="text-2xl mb-1">☀️</div>
+        <div class="text-slate-400 text-xs">Sonnigster Tag</div>
+        <div class="stat-value text-xl font-bold text-yellow-400 mt-1" id="hist-sun">–</div>
+        <div class="text-slate-500 text-xs mt-1" id="hist-sun-year">–</div>
+      </div>
+    </div>
+
+    <!-- Vergleichs-Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="card p-4 chart-wrap">
+        <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-3">🌡️ Temperatur im Jahresvergleich</h3>
+        <canvas id="chart-hist-temp"></canvas>
+      </div>
+      <div class="card p-4 chart-wrap">
+        <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-3">🌧️ Niederschlag im Jahresvergleich</h3>
+        <canvas id="chart-hist-rain"></canvas>
       </div>
     </div>
   </div>
@@ -462,38 +479,113 @@ async function fetchYearData(lat, lon, year) {
   } catch(e) { console.error('year:', e); }
 }
 
-/* ── Live-Daten: Rekorde (2019–heute) ── */
-async function fetchRecords(lat, lon) {
-  try {
-    const d = await fetch(
-      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
-      `&start_date=2019-01-01&end_date=${TODAY_ISO}` +
-      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max&timezone=auto`
-    ).then(r => r.json());
-    const times = d.daily?.time ?? [];
-    const tmax  = d.daily?.temperature_2m_max ?? [];
-    const tmin  = d.daily?.temperature_2m_min ?? [];
-    const rain  = d.daily?.precipitation_sum ?? [];
-    const wind  = d.daily?.windspeed_10m_max ?? [];
+/* ── Dieser Tag in der Geschichte (10-Jahres-Vergleich) ── */
+let histTempChart = null, histRainChart = null;
 
-    let hi=-999,hiI=0, lo=999,loI=0, ri=-1,riI=0, wi=-1,wiI=0;
-    times.forEach((_,i) => {
-      if (tmax[i]!=null && tmax[i]>hi) { hi=tmax[i]; hiI=i; }
-      if (tmin[i]!=null && tmin[i]<lo) { lo=tmin[i]; loI=i; }
-      if (rain[i]!=null && rain[i]>ri) { ri=rain[i]; riI=i; }
-      if (wind[i]!=null && wind[i]>wi) { wi=wind[i]; wiI=i; }
-    });
-    const fmtD = s => new Date(s).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
-    const setRec = (id, dateId, miniId, val, unit, idx) => {
-      document.getElementById(id).textContent     = val.toFixed(unit==='km/h'?0:1)+' '+unit;
-      document.getElementById(dateId).textContent = fmtD(times[idx]);
-      document.getElementById(miniId).textContent = val.toFixed(unit==='km/h'?0:1)+' '+unit;
-    };
-    if (hi>-999) setRec('rec-hot',  'rec-hot-date',  'rec-hot-mini',  hi, '°C',   hiI);
-    if (lo<999)  setRec('rec-cold', 'rec-cold-date', 'rec-cold-mini', lo, '°C',   loI);
-    if (ri>-1)   setRec('rec-rain', 'rec-rain-date', 'rec-rain-mini', ri, 'mm',   riI);
-    if (wi>-1)   setRec('rec-gust', 'rec-gust-date', 'rec-gust-mini', wi, 'km/h', wiI);
-  } catch(e) { console.error('records:', e); }
+async function fetchDayInHistory(lat, lon) {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day   = String(today.getDate()).padStart(2, '0');
+  const curY  = today.getFullYear();
+
+  const dayLabel = today.toLocaleDateString('de-DE', { day: '2-digit', month: 'long' });
+  document.getElementById('hist-date-label').textContent =
+    `${dayLabel} im Vergleich (${curY - 10}–${curY})`;
+
+  const years = [];
+  for (let y = curY - 10; y <= curY; y++) {
+    if (`${y}-${month}-${day}` <= TODAY_ISO) years.push(y);
+  }
+
+  const results = await Promise.all(years.map(async y => {
+    try {
+      const ds = `${y}-${month}-${day}`;
+      const d = await fetch(
+        `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+        `&start_date=${ds}&end_date=${ds}` +
+        `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,sunshine_duration&timezone=auto`
+      ).then(r => r.json());
+      const rawSun = d.daily?.sunshine_duration?.[0];
+      return {
+        year: y,
+        tmax: d.daily?.temperature_2m_max?.[0] ?? null,
+        tmin: d.daily?.temperature_2m_min?.[0] ?? null,
+        rain: d.daily?.precipitation_sum?.[0]  ?? null,
+        sun:  rawSun != null ? Math.round(rawSun / 360) / 10 : null,
+      };
+    } catch { return { year: y, tmax: null, tmin: null, rain: null, sun: null }; }
+  }));
+
+  let hotVal=-999,hotY=null, coldVal=999,coldY=null;
+  let rainVal=-1,rainY=null, sunVal=-1,sunY=null;
+  results.forEach(r => {
+    if (r.tmax!=null && r.tmax>hotVal)  { hotVal=r.tmax;  hotY=r.year; }
+    if (r.tmin!=null && r.tmin<coldVal) { coldVal=r.tmin; coldY=r.year; }
+    if (r.rain!=null && r.rain>rainVal) { rainVal=r.rain; rainY=r.year; }
+    if (r.sun !=null && r.sun >sunVal)  { sunVal=r.sun;   sunY=r.year; }
+  });
+
+  if (hotY)  { document.getElementById('hist-hot').textContent  = hotVal.toFixed(1)+' °C';  document.getElementById('hist-hot-year').textContent  = hotY; }
+  if (coldY) { document.getElementById('hist-cold').textContent = coldVal.toFixed(1)+' °C'; document.getElementById('hist-cold-year').textContent = coldY; }
+  if (rainY) { document.getElementById('hist-rain').textContent = rainVal.toFixed(1)+' mm'; document.getElementById('hist-rain-year').textContent = rainY; }
+  if (sunY)  { document.getElementById('hist-sun').textContent  = sunVal.toFixed(1)+' h';   document.getElementById('hist-sun-year').textContent  = sunY; }
+
+  /* Mini-Panel im Aktuell-Bereich */
+  if (hotY)  document.getElementById('rec-hot-mini').textContent  = hotVal.toFixed(1)+' °C ('+hotY+')';
+  if (coldY) document.getElementById('rec-cold-mini').textContent = coldVal.toFixed(1)+' °C ('+coldY+')';
+  if (rainY) document.getElementById('rec-rain-mini').textContent = rainVal.toFixed(1)+' mm ('+rainY+')';
+  if (sunY)  document.getElementById('rec-gust-mini').textContent = sunVal.toFixed(1)+' h ('+sunY+')';
+
+  const lbls = results.map(r => String(r.year));
+
+  /* Temperatur-Chart */
+  if (histTempChart) histTempChart.destroy();
+  histTempChart = new Chart(document.getElementById('chart-hist-temp').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: lbls,
+      datasets: [
+        { label:'Max °C', data:results.map(r=>r.tmax),
+          backgroundColor:results.map(r=>r.year===hotY ?'rgba(249,115,22,0.9)':'rgba(249,115,22,0.45)'),
+          borderRadius:3 },
+        { label:'Min °C', data:results.map(r=>r.tmin),
+          backgroundColor:results.map(r=>r.year===coldY?'rgba(56,189,248,0.9)':'rgba(56,189,248,0.45)'),
+          borderRadius:3 },
+      ],
+    },
+    options: {
+      responsive:true, interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'}},
+        y:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'},
+           title:{display:true,text:'°C',color:'#94a3b8'}},
+      },
+    },
+  });
+
+  /* Niederschlag-Chart */
+  if (histRainChart) histRainChart.destroy();
+  histRainChart = new Chart(document.getElementById('chart-hist-rain').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: lbls,
+      datasets: [
+        { label:'Niederschlag mm', data:results.map(r=>r.rain),
+          backgroundColor:results.map(r=>r.year===rainY?'rgba(59,130,246,0.9)':'rgba(59,130,246,0.45)'),
+          borderRadius:3 },
+      ],
+    },
+    options: {
+      responsive:true,
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'}},
+        y:{min:0,ticks:{color:'#3b82f6',font:{size:11}},grid:{color:'#334155'},
+           title:{display:true,text:'mm',color:'#3b82f6'}},
+      },
+    },
+  });
 }
 
 /* ── Jahres-Selektor: 2019 – aktuelles Jahr ── */
@@ -699,7 +791,7 @@ async function switchCity(name, lat, lon) {
   await refreshLive();
   fetch7Days(lat, lon);
   fetchYearData(lat, lon, selYear);
-  fetchRecords(lat, lon);
+  fetchDayInHistory(lat, lon);
   fetchTodayPrecip(lat, lon);
   fetchPollen(lat, lon);
   fetchWeatherWarnings();           /* Warnungen sind DE-weit, kein Ortsparameter */
@@ -741,7 +833,7 @@ async function resetToHome() {
   await refreshLive();
   fetch7Days(HOME_LAT, HOME_LON);
   fetchYearData(HOME_LAT, HOME_LON, selYear);
-  fetchRecords(HOME_LAT, HOME_LON);
+  fetchDayInHistory(HOME_LAT, HOME_LON);
   fetchTodayPrecip(HOME_LAT, HOME_LON);
   fetchPollen(HOME_LAT, HOME_LON);
   fetchWeatherWarnings();
@@ -774,7 +866,7 @@ initFromURL().then(() => {
   updateLocationUI(activeName, activeLat, activeLon);
   fetch7Days(activeLat, activeLon);
   initYearSelect(activeLat, activeLon);
-  fetchRecords(activeLat, activeLon);
+  fetchDayInHistory(activeLat, activeLon);
   fetchTodayPrecip(activeLat, activeLon);
   fetchPollen(activeLat, activeLon);
   fetchWeatherWarnings();
@@ -860,7 +952,7 @@ async function refreshRadar() {
     ];
     radarFrames = frames.map(f => ({
       ...f,
-      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/4/1_1.png',
+      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/2/1_1.png',
         { opacity:0, tileSize:512, zIndex:10, attribution:'RainViewer' }).addTo(radarMap),
     }));
     const slider = document.getElementById('radar-slider');
@@ -880,10 +972,7 @@ let radarMap = null, radarMarker = null, baseTileLayer = null;
 let radarFrames = [], currentFrame = 0, animTimer = null, isPlaying = false;
 
 function getBaseTileUrl() {
-  const h = new Date().getHours();
-  return (h >= 20 || h < 7)
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  return 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 }
 
 function tsLabel(ts) {
@@ -932,7 +1021,7 @@ async function initRadar() {
     ];
     radarFrames = frames.map(f => ({
       ...f,
-      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/4/1_1.png',
+      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/2/1_1.png',
         { opacity:0, tileSize:512, zIndex:10, attribution:'RainViewer' }).addTo(radarMap),
     }));
     const slider = document.getElementById('radar-slider');
