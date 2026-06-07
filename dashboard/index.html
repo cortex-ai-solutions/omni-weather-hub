@@ -33,6 +33,25 @@
     /* Tab pill */
     .tab-pill { transition: all 0.15s; cursor: pointer; }
     .tab-pill.active { background: #3b82f6; color: #fff; }
+
+    /* ── Helles Theme ─────────────────────────── */
+    html.light body  { background: #f1f5f9; }
+    html.light .card { background: #ffffff !important; border-color: #e2e8f0 !important; }
+    html.light .leaflet-container { background: #f1f5f9 !important; }
+    html.light .text-white,
+    html.light .text-slate-100 { color: #111827 !important; }
+    html.light .text-slate-200  { color: #1f2937 !important; }
+    html.light .text-slate-300  { color: #374151 !important; }
+    html.light .text-slate-400  { color: #6b7280 !important; }
+    html.light .text-slate-500  { color: #9ca3af !important; }
+    html.light .text-slate-600  { color: #d1d5db !important; }
+    html.light .bg-slate-700    { background-color: #e5e7eb !important; }
+    html.light .bg-slate-800    { background-color: #f3f4f6 !important; }
+    html.light .border-slate-700 { border-color: #e5e7eb !important; }
+    html.light .border-slate-800 { border-color: #f1f5f9 !important; }
+    html.light .tab-pill         { background: #e5e7eb !important; color: #374151 !important; }
+    html.light .tab-pill.active  { background: #3b82f6 !important; color: #fff !important; }
+    html.light #radar-slider     { accent-color: #3b82f6; }
   </style>
 </head>
 <body class="text-slate-100 min-h-screen font-sans">
@@ -76,10 +95,13 @@
         class="text-slate-500 hover:text-amber-400 text-lg hidden">⌂</button>
     </div>
 
-    <!-- Status -->
+    <!-- Status + Theme-Toggle -->
     <div class="flex items-center gap-2 text-xs text-slate-400 shrink-0">
       <span class="live-dot w-2 h-2 rounded-full bg-emerald-400 inline-block shrink-0"></span>
       <span id="last-updated">Lade Daten…</span>
+      <button id="theme-toggle" onclick="toggleTheme()"
+        title="Hell/Dunkel wechseln"
+        class="ml-2 text-xl leading-none hover:text-amber-400 transition-colors select-none">☀️</button>
     </div>
   </div>
 </header>
@@ -489,32 +511,39 @@ async function fetchDayInHistory(lat, lon) {
   const curY  = today.getFullYear();
 
   const dayLabel = today.toLocaleDateString('de-DE', { day: '2-digit', month: 'long' });
+  const startY = curY - 10;
   document.getElementById('hist-date-label').textContent =
-    `${dayLabel} im Vergleich (${curY - 10}–${curY})`;
+    `${dayLabel} im Vergleich (${startY}–${curY})`;
 
-  const years = [];
-  for (let y = curY - 10; y <= curY; y++) {
-    if (`${y}-${month}-${day}` <= TODAY_ISO) years.push(y);
-  }
-
-  const results = await Promise.all(years.map(async y => {
-    try {
-      const ds = `${y}-${month}-${day}`;
-      const d = await fetch(
-        `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
-        `&start_date=${ds}&end_date=${ds}` +
-        `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,sunshine_duration&timezone=auto`
-      ).then(r => r.json());
-      const rawSun = d.daily?.sunshine_duration?.[0];
-      return {
-        year: y,
-        tmax: d.daily?.temperature_2m_max?.[0] ?? null,
-        tmin: d.daily?.temperature_2m_min?.[0] ?? null,
-        rain: d.daily?.precipitation_sum?.[0]  ?? null,
-        sun:  rawSun != null ? Math.round(rawSun / 360) / 10 : null,
-      };
-    } catch { return { year: y, tmax: null, tmin: null, rain: null, sun: null }; }
-  }));
+  /* Einzelner Archiv-Request für den Gesamtzeitraum, client-seitig filtern
+     — vermeidet Rate-Limiting bei 11 parallelen Einzelrequests */
+  let results = [];
+  try {
+    const d = await fetch(
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
+      `&start_date=${startY}-01-01&end_date=${TODAY_ISO}` +
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,sunshine_duration&timezone=auto`
+    ).then(r => r.json());
+    if (d.error) throw new Error(d.reason ?? 'API-Fehler');
+    const times   = d.daily?.time ?? [];
+    const tmaxArr = d.daily?.temperature_2m_max ?? [];
+    const tminArr = d.daily?.temperature_2m_min ?? [];
+    const rainArr = d.daily?.precipitation_sum  ?? [];
+    const sunArr  = d.daily?.sunshine_duration  ?? [];
+    const target  = `${month}-${day}`;
+    times.forEach((t, i) => {
+      if (t.slice(5) === target) {
+        const rawSun = sunArr[i];
+        results.push({
+          year: parseInt(t.slice(0, 4)),
+          tmax: tmaxArr[i] ?? null,
+          tmin: tminArr[i] ?? null,
+          rain: rainArr[i] ?? null,
+          sun:  rawSun != null ? Math.round(rawSun / 360) / 10 : null,
+        });
+      }
+    });
+  } catch(e) { console.error('history:', e); return; }
 
   let hotVal=-999,hotY=null, coldVal=999,coldY=null;
   let rainVal=-1,rainY=null, sunVal=-1,sunY=null;
@@ -1068,9 +1097,70 @@ document.querySelectorAll('.tab-pill').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    setWindy(WINDY_OVERLAYS[btn.dataset.overlay]);
+    setWindy(btn.dataset.overlay);
   });
 });
+
+/* ── Hell/Dunkel-Toggle ── */
+let isDark = true;
+
+function recolorCharts() {
+  const txt  = isDark ? '#94a3b8' : '#4b5563';
+  const grid = isDark ? '#334155' : '#e5e7eb';
+  const xBg  = isDark ? '#1e293b' : '#f3f4f6';
+  [chart7d, yearChart, histTempChart, histRainChart, chartTodayPrecip].forEach(ch => {
+    if (!ch) return;
+    if (ch.options.plugins?.legend?.labels)
+      ch.options.plugins.legend.labels.color = txt;
+    Object.values(ch.options.scales ?? {}).forEach(sc => {
+      const tc = sc.ticks?.color;
+      if (tc && !['#f97316','#3b82f6','#60a5fa'].includes(tc)) sc.ticks.color = txt;
+      if (sc.grid?.color !== undefined && sc.grid.drawOnChartArea !== false)
+        sc.grid.color = sc.position === 'bottom' ? xBg : grid;
+      if (sc.title?.color && !['#f97316','#3b82f6','#60a5fa'].includes(sc.title.color))
+        sc.title.color = txt;
+    });
+    ch.update('none');
+  });
+}
+
+function toggleTheme() {
+  isDark = !isDark;
+  const html = document.documentElement;
+  html.classList.toggle('light', !isDark);
+  html.classList.toggle('dark',  isDark);
+  document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
+
+  /* Header + Stat-Kacheln mit Tailwind-opacity-Modifier via inline style */
+  const hdr = document.querySelector('header');
+  hdr.style.background  = isDark ? '' : 'rgba(255,255,255,0.95)';
+  hdr.style.borderColor = isDark ? '' : '#e2e8f0';
+  document.querySelectorAll('.bg-slate-900\\/60').forEach(el => {
+    el.style.background = isDark ? '' : 'rgba(241,245,249,0.7)';
+  });
+  const inp = document.getElementById('city-search');
+  inp.style.cssText = isDark ? '' : 'background:#f3f4f6;color:#111827;border-color:#d1d5db;';
+
+  /* Radar: Basemap + Farbschema tauschen */
+  if (radarMap && baseTileLayer) {
+    radarMap.removeLayer(baseTileLayer);
+    baseTileLayer = L.tileLayer(
+      isDark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      { attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19 }
+    ).addTo(radarMap);
+    baseTileLayer.bringToBack();
+  }
+  const scheme = isDark ? 4 : 2;
+  radarFrames.forEach(f => {
+    if (f.layer?._url)
+      f.layer.setUrl(f.layer._url.replace(/\/\d\/1_1\.png/, `/${scheme}/1_1.png`));
+  });
+
+  /* Charts mit neuem Farbschema neu rendern */
+  recolorCharts();
+}
 </script>
 </body>
 </html>
