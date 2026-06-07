@@ -952,8 +952,8 @@ async function refreshRadar() {
     ];
     radarFrames = frames.map(f => ({
       ...f,
-      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/2/1_1.png',
-        { opacity:0, tileSize:512, zIndex:10, attribution:'RainViewer' }).addTo(radarMap),
+      layer: L.tileLayer(host+f.path+'/256/{z}/{x}/{y}/2/1_1.png',
+        { opacity:0.001, tileSize:256, zIndex:f.time, attribution:'RainViewer' }).addTo(radarMap),
     }));
     const slider = document.getElementById('radar-slider');
     slider.max = radarFrames.length - 1;
@@ -981,7 +981,7 @@ function tsLabel(ts) {
 
 function showFrame(idx) {
   if (!radarFrames.length) return;
-  radarFrames.forEach((f,i) => f.layer?.setOpacity(i===idx ? 0.75 : 0));
+  radarFrames.forEach((f,i) => f.layer?.setOpacity(i===idx ? 0.85 : 0.001));
   currentFrame = idx;
   document.getElementById('radar-slider').value = idx;
   const f = radarFrames[idx];
@@ -1021,8 +1021,8 @@ async function initRadar() {
     ];
     radarFrames = frames.map(f => ({
       ...f,
-      layer: L.tileLayer(host+f.path+'/512/{z}/{x}/{y}/2/1_1.png',
-        { opacity:0, tileSize:512, zIndex:10, attribution:'RainViewer' }).addTo(radarMap),
+      layer: L.tileLayer(host+f.path+'/256/{z}/{x}/{y}/2/1_1.png',
+        { opacity:0.001, tileSize:256, zIndex:f.time, attribution:'RainViewer' }).addTo(radarMap),
     }));
     const slider = document.getElementById('radar-slider');
     slider.max = radarFrames.length - 1;
