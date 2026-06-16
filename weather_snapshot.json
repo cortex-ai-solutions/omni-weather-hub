@@ -1,267 +1,27 @@
 {
   "meta": {
-    "generated_at": "2026-06-15 11:54:18 UTC",
+    "generated_at": "2026-06-16 11:02:28 UTC",
     "location": "Suhl-Goldlauter, Thüringen",
     "lat": 50.631,
     "lon": 10.724,
     "source": "Open-Meteo + lokale Sensorik"
   },
   "current": {
-    "timestamp": "2026-06-15 23:00:00",
+    "timestamp": "2026-06-16 23:00:00",
     "source": "open-meteo",
-    "temperature": 9.1,
-    "humidity": 87,
+    "temperature": 14.6,
+    "humidity": 94,
     "precipitation": 0.0,
-    "wind_speed": 2.3,
-    "wind_direction": 39,
-    "wind_gust": 2.9,
+    "wind_speed": 2.8,
+    "wind_direction": 130,
+    "wind_gust": 9.4,
     "solar_radiation": 0.0,
     "uv_index": 0.0,
-    "apparent_temperature": 8.0,
-    "dew_point": 7.0,
+    "apparent_temperature": 15.4,
+    "dew_point": 13.6,
     "uv_alert": 0
   },
   "last_7_days": [
-    {
-      "timestamp": "2026-06-08 12:00:00",
-      "temperature": 20.0,
-      "precipitation": 0.0,
-      "wind_speed": 8.6,
-      "wind_direction": 182,
-      "humidity": 48,
-      "apparent_temperature": 19.9,
-      "uv_index": 6.2
-    },
-    {
-      "timestamp": "2026-06-08 13:00:00",
-      "temperature": 21.2,
-      "precipitation": 0.0,
-      "wind_speed": 9.5,
-      "wind_direction": 191,
-      "humidity": 44,
-      "apparent_temperature": 21.0,
-      "uv_index": 6.9
-    },
-    {
-      "timestamp": "2026-06-08 14:00:00",
-      "temperature": 22.0,
-      "precipitation": 0.0,
-      "wind_speed": 10.4,
-      "wind_direction": 182,
-      "humidity": 46,
-      "apparent_temperature": 22.1,
-      "uv_index": 6.6
-    },
-    {
-      "timestamp": "2026-06-08 15:00:00",
-      "temperature": 22.0,
-      "precipitation": 0.0,
-      "wind_speed": 10.9,
-      "wind_direction": 186,
-      "humidity": 46,
-      "apparent_temperature": 21.0,
-      "uv_index": 6.1
-    },
-    {
-      "timestamp": "2026-06-08 16:00:00",
-      "temperature": 22.0,
-      "precipitation": 0.0,
-      "wind_speed": 11.5,
-      "wind_direction": 200,
-      "humidity": 42,
-      "apparent_temperature": 20.0,
-      "uv_index": 4.85
-    },
-    {
-      "timestamp": "2026-06-08 17:00:00",
-      "temperature": 21.8,
-      "precipitation": 0.0,
-      "wind_speed": 7.2,
-      "wind_direction": 207,
-      "humidity": 46,
-      "apparent_temperature": 20.7,
-      "uv_index": 2.8
-    },
-    {
-      "timestamp": "2026-06-08 18:00:00",
-      "temperature": 21.4,
-      "precipitation": 0.0,
-      "wind_speed": 6.4,
-      "wind_direction": 207,
-      "humidity": 52,
-      "apparent_temperature": 20.9,
-      "uv_index": 1.9
-    },
-    {
-      "timestamp": "2026-06-08 19:00:00",
-      "temperature": 20.8,
-      "precipitation": 0.0,
-      "wind_speed": 9.7,
-      "wind_direction": 219,
-      "humidity": 53,
-      "apparent_temperature": 19.7,
-      "uv_index": 0.9
-    },
-    {
-      "timestamp": "2026-06-08 20:00:00",
-      "temperature": 19.5,
-      "precipitation": 0.0,
-      "wind_speed": 5.6,
-      "wind_direction": 255,
-      "humidity": 64,
-      "apparent_temperature": 19.5,
-      "uv_index": 0.75
-    },
-    {
-      "timestamp": "2026-06-08 21:00:00",
-      "temperature": 17.0,
-      "precipitation": 0.5,
-      "wind_speed": 4.6,
-      "wind_direction": 219,
-      "humidity": 76,
-      "apparent_temperature": 17.2,
-      "uv_index": 0.2
-    },
-    {
-      "timestamp": "2026-06-08 22:00:00",
-      "temperature": 14.9,
-      "precipitation": 0.0,
-      "wind_speed": 4.8,
-      "wind_direction": 167,
-      "humidity": 80,
-      "apparent_temperature": 14.7,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-08 23:00:00",
-      "temperature": 15.4,
-      "precipitation": 0.0,
-      "wind_speed": 6.5,
-      "wind_direction": 161,
-      "humidity": 75,
-      "apparent_temperature": 14.8,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-09 00:00:00",
-      "temperature": 14.7,
-      "precipitation": 0.0,
-      "wind_speed": 7.2,
-      "wind_direction": 153,
-      "humidity": 79,
-      "apparent_temperature": 14.0,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-09 01:00:00",
-      "temperature": 14.4,
-      "precipitation": 0.0,
-      "wind_speed": 8.8,
-      "wind_direction": 168,
-      "humidity": 84,
-      "apparent_temperature": 13.6,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-09 02:00:00",
-      "temperature": 14.5,
-      "precipitation": 0.0,
-      "wind_speed": 9.4,
-      "wind_direction": 184,
-      "humidity": 85,
-      "apparent_temperature": 13.8,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-09 03:00:00",
-      "temperature": 14.1,
-      "precipitation": 0.0,
-      "wind_speed": 9.5,
-      "wind_direction": 191,
-      "humidity": 90,
-      "apparent_temperature": 13.5,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-09 04:00:00",
-      "temperature": 13.9,
-      "precipitation": 0.0,
-      "wind_speed": 8.3,
-      "wind_direction": 198,
-      "humidity": 93,
-      "apparent_temperature": 13.6,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-09 05:00:00",
-      "temperature": 14.1,
-      "precipitation": 0.1,
-      "wind_speed": 15.0,
-      "wind_direction": 215,
-      "humidity": 93,
-      "apparent_temperature": 12.9,
-      "uv_index": 0.0
-    },
-    {
-      "timestamp": "2026-06-09 06:00:00",
-      "temperature": 13.7,
-      "precipitation": 0.1,
-      "wind_speed": 6.4,
-      "wind_direction": 243,
-      "humidity": 93,
-      "apparent_temperature": 13.6,
-      "uv_index": 0.05
-    },
-    {
-      "timestamp": "2026-06-09 07:00:00",
-      "temperature": 13.7,
-      "precipitation": 0.2,
-      "wind_speed": 9.5,
-      "wind_direction": 245,
-      "humidity": 93,
-      "apparent_temperature": 13.1,
-      "uv_index": 0.25
-    },
-    {
-      "timestamp": "2026-06-09 08:00:00",
-      "temperature": 12.7,
-      "precipitation": 0.0,
-      "wind_speed": 12.3,
-      "wind_direction": 275,
-      "humidity": 88,
-      "apparent_temperature": 11.1,
-      "uv_index": 0.25
-    },
-    {
-      "timestamp": "2026-06-09 09:00:00",
-      "temperature": 12.5,
-      "precipitation": 0.1,
-      "wind_speed": 7.9,
-      "wind_direction": 246,
-      "humidity": 83,
-      "apparent_temperature": 11.3,
-      "uv_index": 0.4
-    },
-    {
-      "timestamp": "2026-06-09 10:00:00",
-      "temperature": 12.2,
-      "precipitation": 0.3,
-      "wind_speed": 9.7,
-      "wind_direction": 243,
-      "humidity": 88,
-      "apparent_temperature": 10.9,
-      "uv_index": 1.0
-    },
-    {
-      "timestamp": "2026-06-09 11:00:00",
-      "temperature": 12.2,
-      "precipitation": 0.0,
-      "wind_speed": 11.5,
-      "wind_direction": 250,
-      "humidity": 83,
-      "apparent_temperature": 10.4,
-      "uv_index": 3.6
-    },
     {
       "timestamp": "2026-06-09 12:00:00",
       "temperature": 12.1,
@@ -1724,102 +1484,342 @@
     },
     {
       "timestamp": "2026-06-15 14:00:00",
-      "temperature": 12.7,
+      "temperature": 11.9,
       "precipitation": 0.0,
-      "wind_speed": 12.7,
-      "wind_direction": 285,
-      "humidity": 69,
-      "apparent_temperature": 10.2,
+      "wind_speed": 10.9,
+      "wind_direction": 276,
+      "humidity": 74,
+      "apparent_temperature": 9.6,
       "uv_index": 2.7
     },
     {
       "timestamp": "2026-06-15 15:00:00",
-      "temperature": 12.4,
+      "temperature": 11.8,
       "precipitation": 0.0,
-      "wind_speed": 13.3,
-      "wind_direction": 289,
-      "humidity": 72,
-      "apparent_temperature": 9.8,
-      "uv_index": 2.6
+      "wind_speed": 12.0,
+      "wind_direction": 291,
+      "humidity": 77,
+      "apparent_temperature": 9.5,
+      "uv_index": 2.45
     },
     {
       "timestamp": "2026-06-15 16:00:00",
-      "temperature": 13.1,
+      "temperature": 12.6,
       "precipitation": 0.0,
-      "wind_speed": 14.6,
+      "wind_speed": 14.2,
       "wind_direction": 286,
-      "humidity": 70,
-      "apparent_temperature": 10.4,
-      "uv_index": 3.15
+      "humidity": 73,
+      "apparent_temperature": 10.0,
+      "uv_index": 2.7
     },
     {
       "timestamp": "2026-06-15 17:00:00",
-      "temperature": 13.4,
+      "temperature": 12.9,
       "precipitation": 0.0,
-      "wind_speed": 15.8,
-      "wind_direction": 287,
-      "humidity": 67,
-      "apparent_temperature": 10.4,
-      "uv_index": 2.75
+      "wind_speed": 11.6,
+      "wind_direction": 286,
+      "humidity": 74,
+      "apparent_temperature": 10.8,
+      "uv_index": 2.5
     },
     {
       "timestamp": "2026-06-15 18:00:00",
-      "temperature": 13.6,
+      "temperature": 12.8,
       "precipitation": 0.0,
-      "wind_speed": 11.8,
-      "wind_direction": 297,
-      "humidity": 69,
-      "apparent_temperature": 11.4,
-      "uv_index": 1.7
+      "wind_speed": 10.8,
+      "wind_direction": 296,
+      "humidity": 74,
+      "apparent_temperature": 10.8,
+      "uv_index": 1.25
     },
     {
       "timestamp": "2026-06-15 19:00:00",
-      "temperature": 13.5,
+      "temperature": 12.6,
       "precipitation": 0.0,
-      "wind_speed": 10.2,
+      "wind_speed": 8.3,
       "wind_direction": 288,
-      "humidity": 71,
-      "apparent_temperature": 11.6,
-      "uv_index": 1.8
+      "humidity": 77,
+      "apparent_temperature": 11.1,
+      "uv_index": 1.9
     },
     {
       "timestamp": "2026-06-15 20:00:00",
-      "temperature": 12.8,
+      "temperature": 12.6,
       "precipitation": 0.0,
-      "wind_speed": 7.5,
-      "wind_direction": 287,
+      "wind_speed": 7.1,
+      "wind_direction": 255,
       "humidity": 75,
-      "apparent_temperature": 11.4,
-      "uv_index": 0.6
+      "apparent_temperature": 11.1,
+      "uv_index": 0.55
     },
     {
       "timestamp": "2026-06-15 21:00:00",
-      "temperature": 11.6,
+      "temperature": 11.7,
       "precipitation": 0.0,
-      "wind_speed": 3.7,
-      "wind_direction": 281,
+      "wind_speed": 4.3,
+      "wind_direction": 275,
       "humidity": 80,
-      "apparent_temperature": 10.7,
-      "uv_index": 0.2
+      "apparent_temperature": 10.6,
+      "uv_index": 0.15
     },
     {
       "timestamp": "2026-06-15 22:00:00",
-      "temperature": 10.2,
+      "temperature": 10.3,
       "precipitation": 0.0,
-      "wind_speed": 1.3,
-      "wind_direction": 326,
-      "humidity": 84,
-      "apparent_temperature": 9.4,
+      "wind_speed": 2.9,
+      "wind_direction": 277,
+      "humidity": 85,
+      "apparent_temperature": 9.3,
       "uv_index": 0.0
     },
     {
       "timestamp": "2026-06-15 23:00:00",
-      "temperature": 9.1,
+      "temperature": 8.9,
       "precipitation": 0.0,
-      "wind_speed": 2.3,
-      "wind_direction": 39,
+      "wind_speed": 1.8,
+      "wind_direction": 349,
+      "humidity": 86,
+      "apparent_temperature": 7.8,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 00:00:00",
+      "temperature": 8.1,
+      "precipitation": 0.0,
+      "wind_speed": 1.4,
+      "wind_direction": 180,
       "humidity": 87,
-      "apparent_temperature": 8.0,
+      "apparent_temperature": 6.9,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 01:00:00",
+      "temperature": 7.5,
+      "precipitation": 0.0,
+      "wind_speed": 1.8,
+      "wind_direction": 127,
+      "humidity": 89,
+      "apparent_temperature": 6.2,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 02:00:00",
+      "temperature": 6.4,
+      "precipitation": 0.0,
+      "wind_speed": 2.1,
+      "wind_direction": 149,
+      "humidity": 94,
+      "apparent_temperature": 5.0,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 03:00:00",
+      "temperature": 6.5,
+      "precipitation": 0.0,
+      "wind_speed": 2.8,
+      "wind_direction": 140,
+      "humidity": 91,
+      "apparent_temperature": 5.0,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 04:00:00",
+      "temperature": 6.7,
+      "precipitation": 0.0,
+      "wind_speed": 3.1,
+      "wind_direction": 111,
+      "humidity": 88,
+      "apparent_temperature": 5.1,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 05:00:00",
+      "temperature": 6.6,
+      "precipitation": 0.0,
+      "wind_speed": 4.8,
+      "wind_direction": 153,
+      "humidity": 85,
+      "apparent_temperature": 4.6,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 06:00:00",
+      "temperature": 6.9,
+      "precipitation": 0.0,
+      "wind_speed": 4.3,
+      "wind_direction": 156,
+      "humidity": 90,
+      "apparent_temperature": 5.2,
+      "uv_index": 0.1
+    },
+    {
+      "timestamp": "2026-06-16 07:00:00",
+      "temperature": 8.5,
+      "precipitation": 0.0,
+      "wind_speed": 3.8,
+      "wind_direction": 139,
+      "humidity": 88,
+      "apparent_temperature": 7.1,
+      "uv_index": 0.55
+    },
+    {
+      "timestamp": "2026-06-16 08:00:00",
+      "temperature": 10.2,
+      "precipitation": 0.0,
+      "wind_speed": 4.1,
+      "wind_direction": 142,
+      "humidity": 83,
+      "apparent_temperature": 8.9,
+      "uv_index": 1.4
+    },
+    {
+      "timestamp": "2026-06-16 09:00:00",
+      "temperature": 11.8,
+      "precipitation": 0.0,
+      "wind_speed": 5.2,
+      "wind_direction": 164,
+      "humidity": 79,
+      "apparent_temperature": 10.6,
+      "uv_index": 1.2
+    },
+    {
+      "timestamp": "2026-06-16 10:00:00",
+      "temperature": 12.3,
+      "precipitation": 0.0,
+      "wind_speed": 6.6,
+      "wind_direction": 171,
+      "humidity": 79,
+      "apparent_temperature": 11.1,
+      "uv_index": 1.7
+    },
+    {
+      "timestamp": "2026-06-16 11:00:00",
+      "temperature": 14.1,
+      "precipitation": 0.0,
+      "wind_speed": 7.9,
+      "wind_direction": 180,
+      "humidity": 75,
+      "apparent_temperature": 12.9,
+      "uv_index": 1.6
+    },
+    {
+      "timestamp": "2026-06-16 12:00:00",
+      "temperature": 14.5,
+      "precipitation": 0.0,
+      "wind_speed": 9.9,
+      "wind_direction": 190,
+      "humidity": 76,
+      "apparent_temperature": 13.2,
+      "uv_index": 4.35
+    },
+    {
+      "timestamp": "2026-06-16 13:00:00",
+      "temperature": 14.5,
+      "precipitation": 0.0,
+      "wind_speed": 9.0,
+      "wind_direction": 178,
+      "humidity": 79,
+      "apparent_temperature": 13.5,
+      "uv_index": 4.85
+    },
+    {
+      "timestamp": "2026-06-16 14:00:00",
+      "temperature": 15.9,
+      "precipitation": 0.0,
+      "wind_speed": 8.8,
+      "wind_direction": 189,
+      "humidity": 77,
+      "apparent_temperature": 15.3,
+      "uv_index": 5.95
+    },
+    {
+      "timestamp": "2026-06-16 15:00:00",
+      "temperature": 16.9,
+      "precipitation": 0.0,
+      "wind_speed": 10.0,
+      "wind_direction": 206,
+      "humidity": 76,
+      "apparent_temperature": 16.6,
+      "uv_index": 1.1
+    },
+    {
+      "timestamp": "2026-06-16 16:00:00",
+      "temperature": 16.0,
+      "precipitation": 0.1,
+      "wind_speed": 11.5,
+      "wind_direction": 219,
+      "humidity": 84,
+      "apparent_temperature": 15.4,
+      "uv_index": 0.7
+    },
+    {
+      "timestamp": "2026-06-16 17:00:00",
+      "temperature": 15.8,
+      "precipitation": 0.9,
+      "wind_speed": 9.8,
+      "wind_direction": 204,
+      "humidity": 90,
+      "apparent_temperature": 15.8,
+      "uv_index": 4.3
+    },
+    {
+      "timestamp": "2026-06-16 18:00:00",
+      "temperature": 15.9,
+      "precipitation": 1.4,
+      "wind_speed": 6.3,
+      "wind_direction": 193,
+      "humidity": 90,
+      "apparent_temperature": 16.4,
+      "uv_index": 1.9
+    },
+    {
+      "timestamp": "2026-06-16 19:00:00",
+      "temperature": 15.7,
+      "precipitation": 2.1,
+      "wind_speed": 6.1,
+      "wind_direction": 183,
+      "humidity": 89,
+      "apparent_temperature": 16.1,
+      "uv_index": 0.8
+    },
+    {
+      "timestamp": "2026-06-16 20:00:00",
+      "temperature": 15.2,
+      "precipitation": 2.9,
+      "wind_speed": 3.8,
+      "wind_direction": 131,
+      "humidity": 94,
+      "apparent_temperature": 16.0,
+      "uv_index": 1.1
+    },
+    {
+      "timestamp": "2026-06-16 21:00:00",
+      "temperature": 15.2,
+      "precipitation": 1.0,
+      "wind_speed": 4.8,
+      "wind_direction": 138,
+      "humidity": 94,
+      "apparent_temperature": 15.9,
+      "uv_index": 0.35
+    },
+    {
+      "timestamp": "2026-06-16 22:00:00",
+      "temperature": 15.2,
+      "precipitation": 0.0,
+      "wind_speed": 3.3,
+      "wind_direction": 186,
+      "humidity": 93,
+      "apparent_temperature": 16.0,
+      "uv_index": 0.0
+    },
+    {
+      "timestamp": "2026-06-16 23:00:00",
+      "temperature": 14.6,
+      "precipitation": 0.0,
+      "wind_speed": 2.8,
+      "wind_direction": 130,
+      "humidity": 94,
+      "apparent_temperature": 15.4,
       "uv_index": 0.0
     }
   ],
@@ -1834,16 +1834,16 @@
     {
       "month": "2026-05",
       "avg_temp": 12.2,
-      "total_precip": 115.1,
+      "total_precip": 115.8,
       "max_temp": 26.8,
       "min_temp": -0.2
     },
     {
       "month": "2026-06",
       "avg_temp": 13.1,
-      "total_precip": 38.1,
+      "total_precip": 46.5,
       "max_temp": 22.5,
-      "min_temp": 7.0
+      "min_temp": 6.4
     }
   ],
   "records": {
