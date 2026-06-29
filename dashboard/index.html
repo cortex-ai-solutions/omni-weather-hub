@@ -341,6 +341,24 @@
     </div>
   </div>
 
+  <!-- ── Zeile 5: Monat im Jahresvergleich ── -->
+  <div>
+    <div class="flex items-baseline gap-3 mb-4 flex-wrap">
+      <h2 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">📆 <span id="month-compare-label">Monat</span> im Jahresvergleich</h2>
+      <span class="text-slate-500 text-xs" id="month-compare-sub">–</span>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="card p-4 chart-wrap">
+        <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-3">🌡️ Monatsmittel Temperatur</h3>
+        <canvas id="chart-month-temp"></canvas>
+      </div>
+      <div class="card p-4 chart-wrap">
+        <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-3">🌧️ Monatsniederschlag gesamt</h3>
+        <canvas id="chart-month-rain"></canvas>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- Footer -->
@@ -505,6 +523,7 @@ async function fetchYearData(lat, lon, year) {
 
 /* ── Dieser Tag in der Geschichte (10-Jahres-Vergleich) ── */
 let histTempChart = null, histRainChart = null;
+let monthTempChart = null, monthRainChart = null;
 
 async function fetchDayInHistory(lat, lon) {
   const today = new Date();
@@ -520,19 +539,21 @@ async function fetchDayInHistory(lat, lon) {
   /* Einzelner Archiv-Request für den Gesamtzeitraum, client-seitig filtern
      — vermeidet Rate-Limiting bei 11 parallelen Einzelrequests */
   let results = [];
+  let monthByYear = {};
   try {
     const d = await fetch(
       `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
       `&start_date=${startY}-01-01&end_date=${TODAY_ISO}` +
-      `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,sunshine_duration&timezone=auto`
+      `&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,sunshine_duration&timezone=auto`
     ).then(r => r.json());
     if (d.error) throw new Error(d.reason ?? 'API-Fehler');
-    const times   = d.daily?.time ?? [];
-    const tmaxArr = d.daily?.temperature_2m_max ?? [];
-    const tminArr = d.daily?.temperature_2m_min ?? [];
-    const rainArr = d.daily?.precipitation_sum  ?? [];
-    const sunArr  = d.daily?.sunshine_duration  ?? [];
-    const target  = `${month}-${day}`;
+    const times    = d.daily?.time ?? [];
+    const tmaxArr  = d.daily?.temperature_2m_max  ?? [];
+    const tminArr  = d.daily?.temperature_2m_min  ?? [];
+    const tmeanArr = d.daily?.temperature_2m_mean ?? [];
+    const rainArr  = d.daily?.precipitation_sum   ?? [];
+    const sunArr   = d.daily?.sunshine_duration   ?? [];
+    const target   = `${month}-${day}`;
     times.forEach((t, i) => {
       if (t.slice(5) === target) {
         const rawSun = sunArr[i];
@@ -544,6 +565,14 @@ async function fetchDayInHistory(lat, lon) {
           sun:  rawSun != null ? Math.round(rawSun / 360) / 10 : null,
         });
       }
+    });
+    /* Monatliche Aggregation für den aktuellen Kalendermonat (alle Jahre) */
+    times.forEach((t, i) => {
+      if (t.slice(5, 7) !== month) return;
+      const y = parseInt(t.slice(0, 4));
+      if (!monthByYear[y]) monthByYear[y] = { temps: [], precips: [] };
+      if (tmeanArr[i] != null) monthByYear[y].temps.push(tmeanArr[i]);
+      if (rainArr[i]  != null) monthByYear[y].precips.push(rainArr[i]);
     });
   } catch(e) { console.error('history:', e); return; }
 
@@ -614,6 +643,74 @@ async function fetchDayInHistory(lat, lon) {
         x:{ticks:{color:'#94a3b8',font:{size:11}},grid:{color:'#334155'}},
         y:{min:0,ticks:{color:'#3b82f6',font:{size:11}},grid:{color:'#334155'},
            title:{display:true,text:'mm',color:'#3b82f6'}},
+      },
+    },
+  });
+
+  /* Monatliche Vergleichs-Charts */
+  const monthName = today.toLocaleDateString('de-DE', { month: 'long' });
+  document.getElementById('month-compare-label').textContent = monthName;
+  document.getElementById('month-compare-sub').textContent =
+    `${startY}–${curY} · ${curY}: lfd. Ø bis ${dayLabel}`;
+  renderMonthComparisonCharts(monthByYear, curY);
+}
+
+/* ── Monat im Jahresvergleich ── */
+function renderMonthComparisonCharts(byYear, curY) {
+  const years    = Object.keys(byYear).map(Number).sort();
+  const lbls     = years.map(String);
+  const avgTemps = years.map(y => {
+    const v = byYear[y].temps;
+    return v.length ? Math.round(v.reduce((a,b)=>a+b)/v.length*10)/10 : null;
+  });
+  const sumPrecip = years.map(y => {
+    const v = byYear[y].precips;
+    return v.length ? Math.round(v.reduce((a,b)=>a+b)*10)/10 : null;
+  });
+
+  const tempBg   = years.map(y => y === curY ? 'rgba(249,115,22,0.9)' : 'rgba(249,115,22,0.4)');
+  const rainBg   = years.map(y => y === curY ? 'rgba(59,130,246,0.9)' : 'rgba(59,130,246,0.4)');
+  const baseOpts = {
+    responsive:true,
+    plugins:{ legend:{ display:false },
+      tooltip:{ callbacks:{ title: items => items[0].label } }
+    },
+  };
+
+  if (monthTempChart) monthTempChart.destroy();
+  monthTempChart = new Chart(document.getElementById('chart-month-temp').getContext('2d'), {
+    type:'bar',
+    data:{ labels:lbls, datasets:[{
+      label:'Ø °C', data:avgTemps, backgroundColor:tempBg, borderRadius:3,
+    }]},
+    options:{ ...baseOpts,
+      plugins:{ ...baseOpts.plugins, tooltip:{ callbacks:{
+        title: items => items[0].label === String(curY) ? `${items[0].label} (lfd. Ø)` : items[0].label,
+        label: ctx => ctx.raw != null ? `${ctx.raw.toFixed(1)} °C` : '–',
+      }}},
+      scales:{
+        x:{ ticks:{color:'#94a3b8',font:{size:11}}, grid:{color:'#334155'} },
+        y:{ ticks:{color:'#94a3b8',font:{size:11}}, grid:{color:'#334155'},
+            title:{display:true,text:'°C',color:'#94a3b8'} },
+      },
+    },
+  });
+
+  if (monthRainChart) monthRainChart.destroy();
+  monthRainChart = new Chart(document.getElementById('chart-month-rain').getContext('2d'), {
+    type:'bar',
+    data:{ labels:lbls, datasets:[{
+      label:'mm', data:sumPrecip, backgroundColor:rainBg, borderRadius:3,
+    }]},
+    options:{ ...baseOpts,
+      plugins:{ ...baseOpts.plugins, tooltip:{ callbacks:{
+        title: items => items[0].label === String(curY) ? `${items[0].label} (bisher)` : items[0].label,
+        label: ctx => ctx.raw != null ? `${ctx.raw.toFixed(1)} mm` : '–',
+      }}},
+      scales:{
+        x:{ ticks:{color:'#94a3b8',font:{size:11}}, grid:{color:'#334155'} },
+        y:{ min:0, ticks:{color:'#3b82f6',font:{size:11}}, grid:{color:'#334155'},
+            title:{display:true,text:'mm',color:'#3b82f6'} },
       },
     },
   });
@@ -1110,7 +1207,7 @@ function recolorCharts() {
   const txt  = isDark ? '#94a3b8' : '#4b5563';
   const grid = isDark ? '#334155' : '#e5e7eb';
   const xBg  = isDark ? '#1e293b' : '#f3f4f6';
-  [chart7d, yearChart, histTempChart, histRainChart, chartTodayPrecip].forEach(ch => {
+  [chart7d, yearChart, histTempChart, histRainChart, chartTodayPrecip, monthTempChart, monthRainChart].forEach(ch => {
     if (!ch) return;
     if (ch.options.plugins?.legend?.labels)
       ch.options.plugins.legend.labels.color = txt;
