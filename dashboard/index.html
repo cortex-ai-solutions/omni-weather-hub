@@ -357,6 +357,28 @@
         <canvas id="chart-month-rain"></canvas>
       </div>
     </div>
+
+    <!-- Drill-down: Jahres-Detail -->
+    <div id="year-drilldown" class="hidden mt-5">
+      <div class="card p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-slate-300 text-sm font-semibold uppercase tracking-widest">
+            📊 Alle Monate — <span id="drilldown-year-label">–</span>
+          </h3>
+          <button id="drilldown-close" class="text-slate-500 hover:text-slate-300 text-lg leading-none px-2">✕</button>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 chart-wrap">
+          <div>
+            <h4 class="text-slate-500 text-xs mb-2">🌡️ Monatsmittel Temperatur</h4>
+            <canvas id="chart-drill-temp"></canvas>
+          </div>
+          <div>
+            <h4 class="text-slate-500 text-xs mb-2">🌧️ Monatsniederschlag</h4>
+            <canvas id="chart-drill-rain"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -524,6 +546,7 @@ async function fetchYearData(lat, lon, year) {
 /* ── Dieser Tag in der Geschichte (10-Jahres-Vergleich) ── */
 let histTempChart = null, histRainChart = null;
 let monthTempChart = null, monthRainChart = null;
+let drillTempChart = null, drillRainChart = null;
 
 async function fetchDayInHistory(lat, lon) {
   const today = new Date();
@@ -540,6 +563,7 @@ async function fetchDayInHistory(lat, lon) {
      — vermeidet Rate-Limiting bei 11 parallelen Einzelrequests */
   let results = [];
   let monthByYear = {};
+  let allMonthlyData = {};
   try {
     const d = await fetch(
       `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}` +
@@ -566,13 +590,21 @@ async function fetchDayInHistory(lat, lon) {
         });
       }
     });
-    /* Monatliche Aggregation für den aktuellen Kalendermonat (alle Jahre) */
+    /* Monatliche Aggregation: aktueller Kalendermonat (alle Jahre) + alle Monate (Drill-down) */
     times.forEach((t, i) => {
-      if (t.slice(5, 7) !== month) return;
-      const y = parseInt(t.slice(0, 4));
-      if (!monthByYear[y]) monthByYear[y] = { temps: [], precips: [] };
-      if (tmeanArr[i] != null) monthByYear[y].temps.push(tmeanArr[i]);
-      if (rainArr[i]  != null) monthByYear[y].precips.push(rainArr[i]);
+      const y  = parseInt(t.slice(0, 4));
+      const m  = t.slice(5, 7);
+      /* Vergleichs-Charts: nur aktueller Monat */
+      if (m === month) {
+        if (!monthByYear[y]) monthByYear[y] = { temps: [], precips: [] };
+        if (tmeanArr[i] != null) monthByYear[y].temps.push(tmeanArr[i]);
+        if (rainArr[i]  != null) monthByYear[y].precips.push(rainArr[i]);
+      }
+      /* Drill-down: alle Monate */
+      if (!allMonthlyData[y])    allMonthlyData[y] = {};
+      if (!allMonthlyData[y][m]) allMonthlyData[y][m] = { temps: [], precips: [] };
+      if (tmeanArr[i] != null) allMonthlyData[y][m].temps.push(tmeanArr[i]);
+      if (rainArr[i]  != null) allMonthlyData[y][m].precips.push(rainArr[i]);
     });
   } catch(e) { console.error('history:', e); return; }
 
@@ -652,11 +684,11 @@ async function fetchDayInHistory(lat, lon) {
   document.getElementById('month-compare-label').textContent = monthName;
   document.getElementById('month-compare-sub').textContent =
     `${startY}–${curY} · ${curY}: lfd. Ø bis ${dayLabel}`;
-  renderMonthComparisonCharts(monthByYear, curY);
+  renderMonthComparisonCharts(monthByYear, curY, allMonthlyData);
 }
 
 /* ── Monat im Jahresvergleich ── */
-function renderMonthComparisonCharts(byYear, curY) {
+function renderMonthComparisonCharts(byYear, curY, allMonthlyData) {
   const years    = Object.keys(byYear).map(Number).sort();
   const lbls     = years.map(String);
   const avgTemps = years.map(y => {
@@ -668,13 +700,13 @@ function renderMonthComparisonCharts(byYear, curY) {
     return v.length ? Math.round(v.reduce((a,b)=>a+b)*10)/10 : null;
   });
 
-  const tempBg   = years.map(y => y === curY ? 'rgba(249,115,22,0.9)' : 'rgba(249,115,22,0.4)');
-  const rainBg   = years.map(y => y === curY ? 'rgba(59,130,246,0.9)' : 'rgba(59,130,246,0.4)');
-  const baseOpts = {
-    responsive:true,
-    plugins:{ legend:{ display:false },
-      tooltip:{ callbacks:{ title: items => items[0].label } }
-    },
+  const tempBg = years.map(y => y === curY ? 'rgba(249,115,22,0.9)' : 'rgba(249,115,22,0.4)');
+  const rainBg = years.map(y => y === curY ? 'rgba(59,130,246,0.9)' : 'rgba(59,130,246,0.4)');
+
+  const onClickYear = (evt, elements, chartInstance) => {
+    if (!elements.length) return;
+    const year = years[elements[0].index];
+    showYearDrilldown(year, curY, allMonthlyData);
   };
 
   if (monthTempChart) monthTempChart.destroy();
@@ -683,9 +715,11 @@ function renderMonthComparisonCharts(byYear, curY) {
     data:{ labels:lbls, datasets:[{
       label:'Ø °C', data:avgTemps, backgroundColor:tempBg, borderRadius:3,
     }]},
-    options:{ ...baseOpts,
-      plugins:{ ...baseOpts.plugins, tooltip:{ callbacks:{
-        title: items => items[0].label === String(curY) ? `${items[0].label} (lfd. Ø)` : items[0].label,
+    options:{
+      responsive:true,
+      onClick: onClickYear,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{
+        title: items => items[0].label === String(curY) ? `${items[0].label} (lfd. Ø) → antippen für Details` : `${items[0].label} → antippen für Details`,
         label: ctx => ctx.raw != null ? `${ctx.raw.toFixed(1)} °C` : '–',
       }}},
       scales:{
@@ -702,9 +736,11 @@ function renderMonthComparisonCharts(byYear, curY) {
     data:{ labels:lbls, datasets:[{
       label:'mm', data:sumPrecip, backgroundColor:rainBg, borderRadius:3,
     }]},
-    options:{ ...baseOpts,
-      plugins:{ ...baseOpts.plugins, tooltip:{ callbacks:{
-        title: items => items[0].label === String(curY) ? `${items[0].label} (bisher)` : items[0].label,
+    options:{
+      responsive:true,
+      onClick: onClickYear,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{
+        title: items => items[0].label === String(curY) ? `${items[0].label} (bisher) → antippen für Details` : `${items[0].label} → antippen für Details`,
         label: ctx => ctx.raw != null ? `${ctx.raw.toFixed(1)} mm` : '–',
       }}},
       scales:{
@@ -712,6 +748,69 @@ function renderMonthComparisonCharts(byYear, curY) {
         y:{ min:0, ticks:{color:'#3b82f6',font:{size:11}}, grid:{color:'#334155'},
             title:{display:true,text:'mm',color:'#3b82f6'} },
       },
+    },
+  });
+
+  /* Schließen-Button */
+  document.getElementById('drilldown-close').onclick = () => {
+    document.getElementById('year-drilldown').classList.add('hidden');
+  };
+}
+
+/* ── Drill-down: Alle Monate eines Jahres ── */
+function showYearDrilldown(year, curY, allMonthlyData) {
+  const data = allMonthlyData[year] ?? {};
+  const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+  const avgTemps  = months.map(m => {
+    const v = data[m]?.temps ?? [];
+    return v.length ? Math.round(v.reduce((a,b)=>a+b)/v.length*10)/10 : null;
+  });
+  const sumPrecip = months.map(m => {
+    const v = data[m]?.precips ?? [];
+    return v.length ? Math.round(v.reduce((a,b)=>a+b)*10)/10 : null;
+  });
+
+  /* Aktueller Monat hervorheben (nur beim laufenden Jahr) */
+  const curM = String(new Date().getMonth() + 1).padStart(2, '0');
+  const tempBg = months.map(m =>
+    (year === curY && m === curM) ? 'rgba(249,115,22,0.95)' : 'rgba(249,115,22,0.45)'
+  );
+  const rainBg = months.map(m =>
+    (year === curY && m === curM) ? 'rgba(59,130,246,0.95)' : 'rgba(59,130,246,0.45)'
+  );
+
+  document.getElementById('drilldown-year-label').textContent =
+    year === curY ? `${year} (laufend)` : String(year);
+
+  const drillEl = document.getElementById('year-drilldown');
+  drillEl.classList.remove('hidden');
+  drillEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  const scaleOpts = {
+    x:{ ticks:{color:'#94a3b8',font:{size:11}}, grid:{color:'#334155'} },
+  };
+
+  if (drillTempChart) drillTempChart.destroy();
+  drillTempChart = new Chart(document.getElementById('chart-drill-temp').getContext('2d'), {
+    type:'bar',
+    data:{ labels:MONTH_LBL, datasets:[{
+      label:'Ø °C', data:avgTemps, backgroundColor:tempBg, borderRadius:3,
+    }]},
+    options:{ responsive:true,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>ctx.raw!=null?`${ctx.raw.toFixed(1)} °C`:'–'}} },
+      scales:{ ...scaleOpts, y:{ ticks:{color:'#94a3b8',font:{size:11}}, grid:{color:'#334155'}, title:{display:true,text:'°C',color:'#94a3b8'} } },
+    },
+  });
+
+  if (drillRainChart) drillRainChart.destroy();
+  drillRainChart = new Chart(document.getElementById('chart-drill-rain').getContext('2d'), {
+    type:'bar',
+    data:{ labels:MONTH_LBL, datasets:[{
+      label:'mm', data:sumPrecip, backgroundColor:rainBg, borderRadius:3,
+    }]},
+    options:{ responsive:true,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>ctx.raw!=null?`${ctx.raw.toFixed(1)} mm`:'–'}} },
+      scales:{ ...scaleOpts, y:{ min:0, ticks:{color:'#3b82f6',font:{size:11}}, grid:{color:'#334155'}, title:{display:true,text:'mm',color:'#3b82f6'} } },
     },
   });
 }
@@ -1207,7 +1306,7 @@ function recolorCharts() {
   const txt  = isDark ? '#94a3b8' : '#4b5563';
   const grid = isDark ? '#334155' : '#e5e7eb';
   const xBg  = isDark ? '#1e293b' : '#f3f4f6';
-  [chart7d, yearChart, histTempChart, histRainChart, chartTodayPrecip, monthTempChart, monthRainChart].forEach(ch => {
+  [chart7d, yearChart, histTempChart, histRainChart, chartTodayPrecip, monthTempChart, monthRainChart, drillTempChart, drillRainChart].forEach(ch => {
     if (!ch) return;
     if (ch.options.plugins?.legend?.labels)
       ch.options.plugins.legend.labels.color = txt;
