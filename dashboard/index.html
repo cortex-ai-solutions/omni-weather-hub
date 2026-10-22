@@ -1117,13 +1117,6 @@ async function refreshRadar() {
   if (radarMarker) radarMarker.setLatLng([activeLat, activeLon]);
 
   /* Basemap-Stil tauschen falls Tag/Nacht gewechselt hat */
-  const newUrl = getBaseTileUrl();
-  if (baseTileLayer && baseTileLayer._url !== newUrl) {
-    radarMap.removeLayer(baseTileLayer);
-    baseTileLayer = L.tileLayer(newUrl, {
-      attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19,
-    }).addTo(radarMap);
-  }
 
   /* Alte Tile-Layer entfernen */
   if (isPlaying) togglePlay();
@@ -1141,7 +1134,7 @@ async function refreshRadar() {
     radarFrames = frames.map(f => ({
       ...f,
       layer: L.tileLayer(host+f.path+'/256/{z}/{x}/{y}/2/1_1.png',
-        { opacity:0.001, tileSize:256, zIndex:f.time, attribution:'RainViewer' }).addTo(radarMap),
+        { opacity:0.001, tileSize:256, zIndex:f.time, maxNativeZoom:7, attribution:'RainViewer' }).addTo(radarMap),
     }));
     const slider = document.getElementById('radar-slider');
     slider.max = radarFrames.length - 1;
@@ -1159,8 +1152,15 @@ async function refreshRadar() {
 let radarMap = null, radarMarker = null, baseTileLayer = null;
 let radarFrames = [], currentFrame = 0, animTimer = null, isPlaying = false;
 
-function getBaseTileUrl() {
-  return 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+/* Basemap: Esri Gray Canvas (kein API-Key; CARTO verlangt seit 2026 einen Key) */
+function makeBaseLayer(dark) {
+  const v = dark ? 'Dark' : 'Light';
+  const url = n => 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_' + v + '_Gray_' + n + '/MapServer/tile/{z}/{y}/{x}';
+  const attribution = 'Tiles © Esri · © OpenStreetMap';
+  return L.layerGroup([
+    L.tileLayer(url('Base'), { attribution, maxNativeZoom:16, maxZoom:19 }),
+    L.tileLayer(url('Reference'), { maxNativeZoom:16, maxZoom:19 }),
+  ]);
 }
 
 function tsLabel(ts) {
@@ -1192,9 +1192,7 @@ async function initRadar() {
   radarMap = L.map('radar-map', { zoomControl:true, attributionControl:true })
     .setView([activeLat, activeLon], 7);
 
-  baseTileLayer = L.tileLayer(getBaseTileUrl(), {
-    attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19,
-  }).addTo(radarMap);
+  baseTileLayer = makeBaseLayer(false).addTo(radarMap);
 
   radarMarker = L.circleMarker([activeLat, activeLon], { radius:8, color:'#f97316', fillColor:'#f97316', fillOpacity:0.9, weight:2 })
     .addTo(radarMap).bindPopup(`<b>${activeName}</b>`);
@@ -1210,7 +1208,7 @@ async function initRadar() {
     radarFrames = frames.map(f => ({
       ...f,
       layer: L.tileLayer(host+f.path+'/256/{z}/{x}/{y}/2/1_1.png',
-        { opacity:0.001, tileSize:256, zIndex:f.time, attribution:'RainViewer' }).addTo(radarMap),
+        { opacity:0.001, tileSize:256, zIndex:f.time, maxNativeZoom:7, attribution:'RainViewer' }).addTo(radarMap),
     }));
     const slider = document.getElementById('radar-slider');
     slider.max = radarFrames.length - 1;
@@ -1304,13 +1302,8 @@ function toggleTheme() {
   /* Radar: Basemap + Farbschema tauschen */
   if (radarMap && baseTileLayer) {
     radarMap.removeLayer(baseTileLayer);
-    baseTileLayer = L.tileLayer(
-      isDark
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      { attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:19 }
-    ).addTo(radarMap);
-    baseTileLayer.bringToBack();
+    baseTileLayer = makeBaseLayer(isDark).addTo(radarMap);
+    baseTileLayer.eachLayer(l => l.bringToBack());
   }
   const scheme = isDark ? 4 : 2;
   radarFrames.forEach(f => {
