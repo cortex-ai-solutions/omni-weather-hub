@@ -42,6 +42,22 @@ ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 
 
+def _get_with_retry(url: str, params: dict, attempts: int = 4) -> requests.Response:
+    """GET mit Retry/Backoff bei Timeouts, Verbindungsfehlern und 429/5xx."""
+    for i in range(1, attempts + 1):
+        try:
+            resp = requests.get(url, params=params, timeout=60)
+            if resp.status_code == 429 or resp.status_code >= 500:
+                raise requests.HTTPError(f"HTTP {resp.status_code}", response=resp)
+            return resp
+        except (requests.Timeout, requests.ConnectionError, requests.HTTPError) as exc:
+            if i == attempts:
+                raise
+            wait = 10 * 2 ** (i - 1)
+            print(f"Open-Meteo-Anfrage fehlgeschlagen ({exc}); Retry {i}/{attempts - 1} in {wait}s", file=sys.stderr)
+            time.sleep(wait)
+
+
 def fetch_archive(start: date, end: date) -> list[dict]:
     params = {
         "latitude": LAT,
@@ -51,7 +67,7 @@ def fetch_archive(start: date, end: date) -> list[dict]:
         "hourly": ",".join(HOURLY_VARS),
         "timezone": TIMEZONE,
     }
-    resp = requests.get(ARCHIVE_URL, params=params, timeout=60)
+    resp = _get_with_retry(ARCHIVE_URL, params)
     resp.raise_for_status()
     return _parse_response(resp.json())
 
@@ -65,7 +81,7 @@ def fetch_forecast(past_days: int = 16) -> list[dict]:
         "past_days": past_days,
         "forecast_days": 1,
     }
-    resp = requests.get(FORECAST_URL, params=params, timeout=60)
+    resp = _get_with_retry(FORECAST_URL, params)
     resp.raise_for_status()
     return _parse_response(resp.json())
 
